@@ -1,0 +1,51 @@
+#dungeon-view {
+  width: 640px;
+  height: 480px;
+
+  margin: 0 auto;
+
+  background: black;
+
+  overflow: hidden;
+
+  image-rendering: pixelated;
+}
+
+
+.dungeon-scene {
+  position: relative;
+
+  width: 100%;
+  height: 100%;
+
+  overflow: hidden;
+}
+
+
+.dungeon-background {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: fill;
+
+  image-rendering: pixelated;
+}
+
+
+.wizard {
+  position: absolute;
+
+  left: 50%;
+  bottom: 15%;
+
+  transform: translateX(-50%);
+
+  image-rendering: pixelated;
+}
+
+
+.wizard-near {
+  width: 35%;
+}
