@@ -1,268 +1,2049 @@
 export class DungeonRenderer {
 
-  constructor(dungeon, player, wizard) {
+  constructor(canvas, dungeon, player, wizard) {
+    this.canvas = canvas;
     this.dungeon = dungeon;
     this.player = player;
     this.wizard = wizard;
 
-    this.assetPath = "assets/images/";
+    // =========================================================
+    // WEBGL CONTEXT
+    // =========================================================
+
+    this.gl =
+      this.canvas.getContext("webgl");
+
+    if (!this.gl) {
+      throw new Error(
+        "WebGL is not supported by this browser."
+      );
+    }
+
+
+    // =========================================================
+    // TEXTURE PATHS
+    // =========================================================
+
+    this.texturePaths = {
+      wall: "assets/images/wall_texture.png",
+      floor: "assets/images/floor_texture.png",
+      ceiling: "assets/images/ceiling_texture.png",
+      wizard: "assets/images/wizard.png",
+      artifact: "assets/images/artifact.png",
+      potion: "assets/images/potion.png",
+      trap: "assets/images/trap.png"
+    };
+
+
+    // =========================================================
+    // SHADER STATE
+    // =========================================================
+
+    this.program = null;
+
+    this.positionLocation = null;
+    this.textureLocation = null;
+
+    this.projectionLocation = null;
+    this.viewLocation = null;
+    this.samplerLocation = null;
+
+
+    // =========================================================
+    // STATIC GEOMETRY BUFFERS
+    // =========================================================
+
+    this.wallBuffer = null;
+    this.floorBuffer = null;
+    this.ceilingBuffer = null;
+
+    this.wallVertexCount = 0;
+    this.floorVertexCount = 0;
+    this.ceilingVertexCount = 0;
+
+
+    // =========================================================
+    // DYNAMIC SPRITE BUFFER
+    // =========================================================
+
+    this.spriteBuffer =
+      this.gl.createBuffer();
+
+
+    // =========================================================
+    // TEXTURES
+    // =========================================================
+
+    this.wallTexture = null;
+    this.floorTexture = null;
+    this.ceilingTexture = null;
+
+    this.wizardTexture = null;
+    this.artifactTexture = null;
+    this.potionTexture = null;
+    this.trapTexture = null;
+
+
+    this.initialize();
   }
 
 
-  render() {
-    const room =
-      this.dungeon.getRoom(
-        this.player.row,
-        this.player.col
-      );
+  // =========================================================
+  // INITIALIZATION
+  // =========================================================
 
-    const directions =
-      this.getViewDirections();
+  initialize() {
+    this.initializeWebGL();
 
-    const forwardOpen =
-      this.isOpen(
-        room,
-        directions.forward
-      );
+    this.program =
+      this.createShaderProgram();
 
-    const leftOpen =
-      this.isOpen(
-        room,
-        directions.left
-      );
+    this.getShaderLocations();
 
-    const rightOpen =
-      this.isOpen(
-        room,
-        directions.right
-      );
+    this.createBuffers();
 
-    const background =
-      this.getBackgroundImage(
-        forwardOpen,
-        leftOpen,
-        rightOpen
-      );
+    this.buildDungeonGeometry();
 
-    const wizard =
-      this.renderWizard(
-        directions.forward,
-        forwardOpen
-      );
+    this.loadTextures();
+  }
 
-    return `
-      <div class="dungeon-scene">
 
-        <img
-          class="dungeon-background"
-          src="${this.assetPath}${background}"
-          alt=""
-        >
+  initializeWebGL() {
+    const gl = this.gl;
 
-        ${wizard}
+    gl.enable(
+      gl.DEPTH_TEST
+    );
 
-      </div>
+    gl.depthFunc(
+      gl.LEQUAL
+    );
+
+    /*
+     * We are inside the dungeon, so do not
+     * discard back-facing polygons.
+     */
+    gl.disable(
+      gl.CULL_FACE
+    );
+
+    gl.clearColor(
+      0.03,
+      0.04,
+      0.03,
+      1.0
+    );
+  }
+
+
+  // =========================================================
+  // SHADERS
+  // =========================================================
+
+  createShaderProgram() {
+    const gl = this.gl;
+
+    const vertexShaderSource = `
+      attribute vec3 a_position;
+      attribute vec2 a_texCoord;
+
+      uniform mat4 u_projection;
+      uniform mat4 u_view;
+
+      varying vec2 v_texCoord;
+
+      void main() {
+
+        gl_Position =
+          u_projection
+          * u_view
+          * vec4(
+              a_position,
+              1.0
+            );
+
+        v_texCoord =
+          a_texCoord;
+      }
     `;
-  }
 
 
-  getViewDirections() {
-    switch (this.player.direction) {
+    const fragmentShaderSource = `
+      precision mediump float;
 
-      case "NORTH":
-        return {
-          forward: "north",
-          left: "west",
-          right: "east"
-        };
+      uniform sampler2D u_texture;
 
-      case "EAST":
-        return {
-          forward: "east",
-          left: "north",
-          right: "south"
-        };
+      varying vec2 v_texCoord;
 
-      case "SOUTH":
-        return {
-          forward: "south",
-          left: "east",
-          right: "west"
-        };
+      void main() {
 
-      case "WEST":
-        return {
-          forward: "west",
-          left: "south",
-          right: "north"
-        };
-
-      default:
-        throw new Error(
-          `Invalid player direction: ${this.player.direction}`
-        );
-    }
-  }
+        gl_FragColor =
+          texture2D(
+            u_texture,
+            v_texCoord
+          );
+      }
+    `;
 
 
-  isOpen(room, direction) {
-    switch (direction) {
-
-      case "north":
-        return room.northDoor;
-
-      case "south":
-        return room.southDoor;
-
-      case "east":
-        return room.eastDoor;
-
-      case "west":
-        return room.westDoor;
-
-      default:
-        return false;
-    }
-  }
-
-
-  getBackgroundImage(
-    forwardOpen,
-    leftOpen,
-    rightOpen
-  ) {
-
-    if (
-      forwardOpen
-      && leftOpen
-      && rightOpen
-    ) {
-      return "both_openings.png";
-    }
-
-    if (
-      forwardOpen
-      && leftOpen
-    ) {
-      return "left_opening.png";
-    }
-
-    if (
-      forwardOpen
-      && rightOpen
-    ) {
-      return "right_opening.png";
-    }
-
-    if (forwardOpen) {
-      return "open_corridor.png";
-    }
-
-    if (
-      !forwardOpen
-      && leftOpen
-      && rightOpen
-    ) {
-      return "t_intersection.png";
-    }
-
-    if (
-      !forwardOpen
-      && leftOpen
-    ) {
-      return "corner_left.png";
-    }
-
-    if (
-      !forwardOpen
-      && rightOpen
-    ) {
-      return "corner_right.png";
-    }
-
-    return "dead_end_wall.png";
-  }
-
-
-  renderWizard(
-    forwardDirection,
-    forwardOpen
-  ) {
-    if (!forwardOpen) {
-      return "";
-    }
-
-    const nextPosition =
-      this.getNextPosition(
-        this.player.row,
-        this.player.col,
-        forwardDirection
+    const vertexShader =
+      this.compileShader(
+        gl.VERTEX_SHADER,
+        vertexShaderSource
       );
 
-    if (nextPosition === null) {
-      return "";
-    }
+
+    const fragmentShader =
+      this.compileShader(
+        gl.FRAGMENT_SHADER,
+        fragmentShaderSource
+      );
+
+
+    const program =
+      gl.createProgram();
+
+
+    gl.attachShader(
+      program,
+      vertexShader
+    );
+
+
+    gl.attachShader(
+      program,
+      fragmentShader
+    );
+
+
+    gl.linkProgram(
+      program
+    );
+
 
     if (
-      nextPosition.row === this.wizard.row
-      &&
-      nextPosition.col === this.wizard.col
-    ) {
-      return `
-        <img
-          class="wizard wizard-near"
-          src="${this.assetPath}wizard_near.png"
-          alt="Wizard"
-        >
-      `;
-    }
-
-    return "";
-  }
-
-
-  getNextPosition(
-    row,
-    col,
-    direction
-  ) {
-    let nextRow = row;
-    let nextCol = col;
-
-    switch (direction) {
-
-      case "north":
-        nextRow--;
-        break;
-
-      case "south":
-        nextRow++;
-        break;
-
-      case "east":
-        nextCol++;
-        break;
-
-      case "west":
-        nextCol--;
-        break;
-
-      default:
-        return null;
-    }
-
-    if (
-      !this.dungeon.inBounds(
-        nextRow,
-        nextCol
+      !gl.getProgramParameter(
+        program,
+        gl.LINK_STATUS
       )
     ) {
-      return null;
+      throw new Error(
+        "Could not link WebGL program: "
+        + gl.getProgramInfoLog(
+          program
+        )
+      );
     }
 
-    return {
-      row: nextRow,
-      col: nextCol
+
+    return program;
+  }
+
+
+  compileShader(type, source) {
+    const gl = this.gl;
+
+    const shader =
+      gl.createShader(type);
+
+
+    gl.shaderSource(
+      shader,
+      source
+    );
+
+
+    gl.compileShader(
+      shader
+    );
+
+
+    if (
+      !gl.getShaderParameter(
+        shader,
+        gl.COMPILE_STATUS
+      )
+    ) {
+      throw new Error(
+        "Could not compile WebGL shader: "
+        + gl.getShaderInfoLog(
+          shader
+        )
+      );
+    }
+
+
+    return shader;
+  }
+
+
+  getShaderLocations() {
+    const gl = this.gl;
+
+
+    this.positionLocation =
+      gl.getAttribLocation(
+        this.program,
+        "a_position"
+      );
+
+
+    this.textureLocation =
+      gl.getAttribLocation(
+        this.program,
+        "a_texCoord"
+      );
+
+
+    this.projectionLocation =
+      gl.getUniformLocation(
+        this.program,
+        "u_projection"
+      );
+
+
+    this.viewLocation =
+      gl.getUniformLocation(
+        this.program,
+        "u_view"
+      );
+
+
+    this.samplerLocation =
+      gl.getUniformLocation(
+        this.program,
+        "u_texture"
+      );
+  }
+
+
+  // =========================================================
+  // BUFFERS
+  // =========================================================
+
+  createBuffers() {
+    const gl = this.gl;
+
+
+    this.wallBuffer =
+      gl.createBuffer();
+
+
+    this.floorBuffer =
+      gl.createBuffer();
+
+
+    this.ceilingBuffer =
+      gl.createBuffer();
+  }
+
+
+  // =========================================================
+  // BUILD DUNGEON GEOMETRY
+  // =========================================================
+
+  buildDungeonGeometry() {
+    const wallVertices = [];
+    const floorVertices = [];
+    const ceilingVertices = [];
+
+
+    for (
+      let row = 0;
+      row < this.dungeon.rows;
+      row++
+    ) {
+
+      for (
+        let col = 0;
+        col < this.dungeon.cols;
+        col++
+      ) {
+
+        const room =
+          this.dungeon.getRoom(
+            row,
+            col
+          );
+
+
+        // -----------------------------------------------------
+        // FLOOR
+        // -----------------------------------------------------
+
+        this.addFloor(
+          floorVertices,
+          row,
+          col
+        );
+
+
+        // -----------------------------------------------------
+        // CEILING
+        // -----------------------------------------------------
+
+        this.addCeiling(
+          ceilingVertices,
+          row,
+          col
+        );
+
+
+        /*
+         * NORTH and WEST walls are generated
+         * for every room.
+         *
+         * SOUTH and EAST walls are only needed
+         * on the dungeon outer boundary.
+         */
+
+
+        // -----------------------------------------------------
+        // NORTH WALL
+        // -----------------------------------------------------
+
+        if (!room.northDoor) {
+
+          this.addNorthWall(
+            wallVertices,
+            row,
+            col
+          );
+        }
+
+
+        // -----------------------------------------------------
+        // WEST WALL
+        // -----------------------------------------------------
+
+        if (!room.westDoor) {
+
+          this.addWestWall(
+            wallVertices,
+            row,
+            col
+          );
+        }
+
+
+        // -----------------------------------------------------
+        // SOUTH OUTER WALL
+        // -----------------------------------------------------
+
+        if (
+          row ===
+          this.dungeon.rows - 1
+          &&
+          !room.southDoor
+        ) {
+
+          this.addSouthWall(
+            wallVertices,
+            row,
+            col
+          );
+        }
+
+
+        // -----------------------------------------------------
+        // EAST OUTER WALL
+        // -----------------------------------------------------
+
+        if (
+          col ===
+          this.dungeon.cols - 1
+          &&
+          !room.eastDoor
+        ) {
+
+          this.addEastWall(
+            wallVertices,
+            row,
+            col
+          );
+        }
+      }
+    }
+
+
+    this.uploadStaticBuffer(
+      this.wallBuffer,
+      wallVertices
+    );
+
+
+    this.uploadStaticBuffer(
+      this.floorBuffer,
+      floorVertices
+    );
+
+
+    this.uploadStaticBuffer(
+      this.ceilingBuffer,
+      ceilingVertices
+    );
+
+
+    /*
+     * Each vertex stores:
+     *
+     * x
+     * y
+     * z
+     * u
+     * v
+     */
+
+    this.wallVertexCount =
+      wallVertices.length / 5;
+
+
+    this.floorVertexCount =
+      floorVertices.length / 5;
+
+
+    this.ceilingVertexCount =
+      ceilingVertices.length / 5;
+  }
+
+
+  uploadStaticBuffer(
+    buffer,
+    vertices
+  ) {
+    const gl = this.gl;
+
+
+    gl.bindBuffer(
+      gl.ARRAY_BUFFER,
+      buffer
+    );
+
+
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array(
+        vertices
+      ),
+      gl.STATIC_DRAW
+    );
+  }
+
+
+  // =========================================================
+  // FLOOR
+  // =========================================================
+
+  addFloor(
+    vertices,
+    row,
+    col
+  ) {
+
+    const x1 = col;
+    const x2 = col + 1;
+
+    const z1 = row;
+    const z2 = row + 1;
+
+    const y = 0;
+
+
+    this.addQuad(
+      vertices,
+
+      [
+        x1,
+        y,
+        z1
+      ],
+
+      [
+        x2,
+        y,
+        z1
+      ],
+
+      [
+        x2,
+        y,
+        z2
+      ],
+
+      [
+        x1,
+        y,
+        z2
+      ]
+    );
+  }
+
+
+  // =========================================================
+  // CEILING
+  // =========================================================
+
+  addCeiling(
+    vertices,
+    row,
+    col
+  ) {
+
+    const x1 = col;
+    const x2 = col + 1;
+
+    const z1 = row;
+    const z2 = row + 1;
+
+    const y = 1;
+
+
+    this.addQuad(
+      vertices,
+
+      [
+        x1,
+        y,
+        z2
+      ],
+
+      [
+        x2,
+        y,
+        z2
+      ],
+
+      [
+        x2,
+        y,
+        z1
+      ],
+
+      [
+        x1,
+        y,
+        z1
+      ]
+    );
+  }
+
+
+  // =========================================================
+  // NORTH WALL
+  // =========================================================
+
+  addNorthWall(
+    vertices,
+    row,
+    col
+  ) {
+
+    const x1 = col;
+    const x2 = col + 1;
+
+    const z = row;
+
+
+    this.addQuad(
+      vertices,
+
+      [
+        x1,
+        0,
+        z
+      ],
+
+      [
+        x2,
+        0,
+        z
+      ],
+
+      [
+        x2,
+        1,
+        z
+      ],
+
+      [
+        x1,
+        1,
+        z
+      ]
+    );
+  }
+
+
+  // =========================================================
+  // SOUTH WALL
+  // =========================================================
+
+  addSouthWall(
+    vertices,
+    row,
+    col
+  ) {
+
+    const x1 = col;
+    const x2 = col + 1;
+
+    const z =
+      row + 1;
+
+
+    this.addQuad(
+      vertices,
+
+      [
+        x2,
+        0,
+        z
+      ],
+
+      [
+        x1,
+        0,
+        z
+      ],
+
+      [
+        x1,
+        1,
+        z
+      ],
+
+      [
+        x2,
+        1,
+        z
+      ]
+    );
+  }
+
+
+  // =========================================================
+  // WEST WALL
+  // =========================================================
+
+  addWestWall(
+    vertices,
+    row,
+    col
+  ) {
+
+    const x = col;
+
+    const z1 = row;
+    const z2 = row + 1;
+
+
+    this.addQuad(
+      vertices,
+
+      [
+        x,
+        0,
+        z2
+      ],
+
+      [
+        x,
+        0,
+        z1
+      ],
+
+      [
+        x,
+        1,
+        z1
+      ],
+
+      [
+        x,
+        1,
+        z2
+      ]
+    );
+  }
+
+
+  // =========================================================
+  // EAST WALL
+  // =========================================================
+
+  addEastWall(
+    vertices,
+    row,
+    col
+  ) {
+
+    const x =
+      col + 1;
+
+    const z1 = row;
+    const z2 = row + 1;
+
+
+    this.addQuad(
+      vertices,
+
+      [
+        x,
+        0,
+        z1
+      ],
+
+      [
+        x,
+        0,
+        z2
+      ],
+
+      [
+        x,
+        1,
+        z2
+      ],
+
+      [
+        x,
+        1,
+        z1
+      ]
+    );
+  }
+
+
+  // =========================================================
+  // GENERIC QUAD
+  // =========================================================
+
+  addQuad(
+    vertices,
+    bottomLeft,
+    bottomRight,
+    topRight,
+    topLeft
+  ) {
+
+    /*
+     * Rectangle becomes two triangles.
+     *
+     * Triangle 1:
+     *
+     * bottomLeft
+     * bottomRight
+     * topRight
+     *
+     * Triangle 2:
+     *
+     * bottomLeft
+     * topRight
+     * topLeft
+     */
+
+
+    // Triangle 1
+
+    this.addVertex(
+      vertices,
+      bottomLeft,
+      0,
+      1
+    );
+
+
+    this.addVertex(
+      vertices,
+      bottomRight,
+      1,
+      1
+    );
+
+
+    this.addVertex(
+      vertices,
+      topRight,
+      1,
+      0
+    );
+
+
+    // Triangle 2
+
+    this.addVertex(
+      vertices,
+      bottomLeft,
+      0,
+      1
+    );
+
+
+    this.addVertex(
+      vertices,
+      topRight,
+      1,
+      0
+    );
+
+
+    this.addVertex(
+      vertices,
+      topLeft,
+      0,
+      0
+    );
+  }
+
+
+  addVertex(
+    vertices,
+    position,
+    u,
+    v
+  ) {
+
+    vertices.push(
+      position[0],
+      position[1],
+      position[2],
+      u,
+      v
+    );
+  }
+
+
+  // =========================================================
+  // TEXTURES
+  // =========================================================
+
+  loadTextures() {
+
+    /*
+     * Dungeon surface textures use flipY = true.
+     *
+     * Sprites use flipY = false.
+     */
+
+
+    this.wallTexture =
+      this.loadTexture(
+        this.texturePaths.wall,
+        true
+      );
+
+
+    this.floorTexture =
+      this.loadTexture(
+        this.texturePaths.floor,
+        true
+      );
+
+
+    this.ceilingTexture =
+      this.loadTexture(
+        this.texturePaths.ceiling,
+        true
+      );
+
+
+    this.wizardTexture =
+      this.loadTexture(
+        this.texturePaths.wizard,
+        false
+      );
+
+
+    this.artifactTexture =
+      this.loadTexture(
+        this.texturePaths.artifact,
+        false
+      );
+
+
+    this.potionTexture =
+      this.loadTexture(
+        this.texturePaths.potion,
+        false
+      );
+
+
+    this.trapTexture =
+      this.loadTexture(
+        this.texturePaths.trap,
+        false
+      );
+  }
+
+
+  loadTexture(
+    path,
+    flipY = false
+  ) {
+
+    const gl = this.gl;
+
+
+    const texture =
+      gl.createTexture();
+
+
+    gl.bindTexture(
+      gl.TEXTURE_2D,
+      texture
+    );
+
+
+    /*
+     * Temporary pixel while the image loads.
+     */
+
+    const placeholder =
+      new Uint8Array([
+        70,
+        80,
+        65,
+        255
+      ]);
+
+
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      1,
+      1,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      placeholder
+    );
+
+
+    const image =
+      new Image();
+
+
+    image.onload = () => {
+
+      gl.bindTexture(
+        gl.TEXTURE_2D,
+        texture
+      );
+
+
+      /*
+       * Important:
+       *
+       * WebGL remembers this setting globally.
+       * Set it explicitly for every texture.
+       */
+
+      gl.pixelStorei(
+        gl.UNPACK_FLIP_Y_WEBGL,
+        flipY
+      );
+
+
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        image
+      );
+
+
+      /*
+       * Pixel-art rendering.
+       */
+
+      gl.texParameteri(
+        gl.TEXTURE_2D,
+        gl.TEXTURE_MIN_FILTER,
+        gl.NEAREST
+      );
+
+
+      gl.texParameteri(
+        gl.TEXTURE_2D,
+        gl.TEXTURE_MAG_FILTER,
+        gl.NEAREST
+      );
+
+
+      /*
+       * Works with arbitrary PNG dimensions.
+       */
+
+      gl.texParameteri(
+        gl.TEXTURE_2D,
+        gl.TEXTURE_WRAP_S,
+        gl.CLAMP_TO_EDGE
+      );
+
+
+      gl.texParameteri(
+        gl.TEXTURE_2D,
+        gl.TEXTURE_WRAP_T,
+        gl.CLAMP_TO_EDGE
+      );
+
+
+      this.render();
     };
+
+
+    image.src = path;
+
+
+    return texture;
+  }
+
+
+  // =========================================================
+  // MAIN RENDER
+  // =========================================================
+
+  render() {
+    const gl = this.gl;
+
+
+    gl.viewport(
+      0,
+      0,
+      this.canvas.width,
+      this.canvas.height
+    );
+
+
+    gl.clear(
+      gl.COLOR_BUFFER_BIT
+      |
+      gl.DEPTH_BUFFER_BIT
+    );
+
+
+    gl.useProgram(
+      this.program
+    );
+
+
+    const aspect =
+      this.canvas.width
+      /
+      this.canvas.height;
+
+
+    const projection =
+      this.createPerspectiveMatrix(
+        this.degreesToRadians(
+          70
+        ),
+        aspect,
+        0.05,
+        30
+      );
+
+
+    const view =
+      this.createViewMatrix();
+
+
+    gl.uniformMatrix4fv(
+      this.projectionLocation,
+      false,
+      projection
+    );
+
+
+    gl.uniformMatrix4fv(
+      this.viewLocation,
+      false,
+      view
+    );
+
+
+    gl.uniform1i(
+      this.samplerLocation,
+      0
+    );
+
+
+    // ---------------------------------------------------------
+    // FLOOR
+    // ---------------------------------------------------------
+
+    this.drawBuffer(
+      this.floorBuffer,
+      this.floorVertexCount,
+      this.floorTexture
+    );
+
+
+    // ---------------------------------------------------------
+    // CEILING
+    // ---------------------------------------------------------
+
+    this.drawBuffer(
+      this.ceilingBuffer,
+      this.ceilingVertexCount,
+      this.ceilingTexture
+    );
+
+
+    // ---------------------------------------------------------
+    // WALLS
+    // ---------------------------------------------------------
+
+    this.drawBuffer(
+      this.wallBuffer,
+      this.wallVertexCount,
+      this.wallTexture
+    );
+
+
+    // ---------------------------------------------------------
+    // ROOM OBJECTS
+    // ---------------------------------------------------------
+
+    this.drawRoomObjects();
+
+
+    // ---------------------------------------------------------
+    // WIZARD
+    // ---------------------------------------------------------
+
+    this.drawWizard();
+  }
+
+
+  // =========================================================
+  // ROOM OBJECTS
+  // =========================================================
+  drawRoomObjects() {
+
+    for (
+      let row = 0;
+      row < this.dungeon.rows;
+      row++
+    ) {
+
+      for (
+        let col = 0;
+        col < this.dungeon.cols;
+        col++
+      ) {
+
+        const room =
+          this.dungeon.getRoom(
+            row,
+            col
+          );
+
+
+        // Artifact
+        if (room.hasArtifact()) {
+
+          this.drawBillboardSprite(
+            row,
+            col,
+            this.artifactTexture,
+            0.40,
+            0.40
+          );
+        }
+
+
+        // Potion
+        if (room.hasPotion) {
+
+          this.drawBillboardSprite(
+            row,
+            col,
+            this.potionTexture,
+            0.30,
+            0.35
+          );
+        }
+
+
+        // Trap
+        if (
+          room.hasTrap
+          &&
+          !room.trapTriggered
+        ) {
+
+          this.drawFloorSprite(
+            row,
+            col,
+            this.trapTexture,
+            0.65
+          );
+        }
+      }
+    }
+  }
+
+
+  // =========================================================
+  // GENERIC BILLBOARD SPRITE
+  // =========================================================
+
+  drawBillboardSprite(
+    row,
+    col,
+    texture,
+    width,
+    height
+  ) {
+
+    if (!texture) {
+      return;
+    }
+
+
+    const gl = this.gl;
+
+
+    const centerX =
+      col + 0.5;
+
+
+    const centerZ =
+      row + 0.5;
+
+
+    /*
+     * Player camera direction.
+     */
+
+    const forward =
+      this.getForwardVector();
+
+
+    /*
+     * Perpendicular vector gives us
+     * the horizontal billboard axis.
+     */
+
+    const rightX =
+      -forward.z;
+
+
+    const rightZ =
+      forward.x;
+
+
+    const halfWidth =
+      width / 2;
+
+
+    const leftX =
+      centerX
+      -
+      rightX * halfWidth;
+
+
+    const leftZ =
+      centerZ
+      -
+      rightZ * halfWidth;
+
+
+    const rightXPosition =
+      centerX
+      +
+      rightX * halfWidth;
+
+
+    const rightZPosition =
+      centerZ
+      +
+      rightZ * halfWidth;
+
+
+    /*
+     * Lift slightly above the floor.
+     */
+
+    const bottom =
+      0.02;
+
+
+    const top =
+      bottom + height;
+
+
+    const vertices = [];
+
+
+    this.addQuad(
+      vertices,
+
+      [
+        leftX,
+        bottom,
+        leftZ
+      ],
+
+      [
+        rightXPosition,
+        bottom,
+        rightZPosition
+      ],
+
+      [
+        rightXPosition,
+        top,
+        rightZPosition
+      ],
+
+      [
+        leftX,
+        top,
+        leftZ
+      ]
+    );
+
+
+    this.uploadDynamicSprite(
+      vertices,
+      texture
+    );
+  }
+
+
+  // =========================================================
+  // FLOOR SPRITE
+  // =========================================================
+
+  drawFloorSprite(
+    row,
+    col,
+    texture,
+    size
+  ) {
+
+    if (!texture) {
+      return;
+    }
+
+
+    const centerX =
+      col + 0.5;
+
+
+    const centerZ =
+      row + 0.5;
+
+
+    const half =
+      size / 2;
+
+
+    /*
+     * Slight offset prevents z-fighting
+     * with the actual floor.
+     */
+
+    const y =
+      0.005;
+
+
+    const vertices = [];
+
+
+    this.addQuad(
+      vertices,
+
+      [
+        centerX - half,
+        y,
+        centerZ - half
+      ],
+
+      [
+        centerX + half,
+        y,
+        centerZ - half
+      ],
+
+      [
+        centerX + half,
+        y,
+        centerZ + half
+      ],
+
+      [
+        centerX - half,
+        y,
+        centerZ + half
+      ]
+    );
+
+
+    this.uploadDynamicSprite(
+      vertices,
+      texture
+    );
+  }
+
+
+  // =========================================================
+  // DYNAMIC SPRITE DRAW
+  // =========================================================
+
+  uploadDynamicSprite(
+    vertices,
+    texture
+  ) {
+
+    const gl = this.gl;
+
+
+    gl.bindBuffer(
+      gl.ARRAY_BUFFER,
+      this.spriteBuffer
+    );
+
+
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array(
+        vertices
+      ),
+      gl.DYNAMIC_DRAW
+    );
+
+
+    /*
+     * PNG transparency.
+     */
+
+    gl.enable(
+      gl.BLEND
+    );
+
+
+    gl.blendFunc(
+      gl.SRC_ALPHA,
+      gl.ONE_MINUS_SRC_ALPHA
+    );
+
+
+    /*
+     * Prevent transparent parts of the PNG
+     * from writing to the depth buffer.
+     */
+
+    gl.depthMask(
+      false
+    );
+
+
+    this.drawBuffer(
+      this.spriteBuffer,
+      6,
+      texture
+    );
+
+
+    gl.depthMask(
+      true
+    );
+
+
+    gl.disable(
+      gl.BLEND
+    );
+  }
+
+
+  // =========================================================
+  // WIZARD
+  // =========================================================
+
+  drawWizard() {
+
+    this.drawBillboardSprite(
+      this.wizard.row,
+      this.wizard.col,
+      this.wizardTexture,
+      0.55,
+      0.85
+    );
+  }
+
+
+  // =========================================================
+  // DRAW BUFFER
+  // =========================================================
+
+  drawBuffer(
+    buffer,
+    vertexCount,
+    texture
+  ) {
+
+    const gl = this.gl;
+
+
+    gl.bindBuffer(
+      gl.ARRAY_BUFFER,
+      buffer
+    );
+
+
+    /*
+     * Vertex layout:
+     *
+     * x y z u v
+     *
+     * 5 floats total.
+     */
+
+    const stride =
+      5
+      *
+      Float32Array.BYTES_PER_ELEMENT;
+
+
+    // ---------------------------------------------------------
+    // POSITION
+    // ---------------------------------------------------------
+
+    gl.enableVertexAttribArray(
+      this.positionLocation
+    );
+
+
+    gl.vertexAttribPointer(
+      this.positionLocation,
+      3,
+      gl.FLOAT,
+      false,
+      stride,
+      0
+    );
+
+
+    // ---------------------------------------------------------
+    // TEXTURE COORDINATES
+    // ---------------------------------------------------------
+
+    gl.enableVertexAttribArray(
+      this.textureLocation
+    );
+
+
+    gl.vertexAttribPointer(
+      this.textureLocation,
+      2,
+      gl.FLOAT,
+      false,
+      stride,
+      3
+      *
+      Float32Array.BYTES_PER_ELEMENT
+    );
+
+
+    // ---------------------------------------------------------
+    // TEXTURE
+    // ---------------------------------------------------------
+
+    gl.activeTexture(
+      gl.TEXTURE0
+    );
+
+
+    gl.bindTexture(
+      gl.TEXTURE_2D,
+      texture
+    );
+
+
+    // ---------------------------------------------------------
+    // DRAW
+    // ---------------------------------------------------------
+
+    gl.drawArrays(
+      gl.TRIANGLES,
+      0,
+      vertexCount
+    );
+  }
+
+
+  // =========================================================
+  // CAMERA
+  // =========================================================
+
+  createViewMatrix() {
+
+    /*
+     * Player stands in the center of the room.
+     */
+
+    const eye = [
+
+      this.player.col + 0.5,
+
+      0.5,
+
+      this.player.row + 0.5
+    ];
+
+
+    const forward =
+      this.getForwardVector();
+
+
+    const target = [
+
+      eye[0]
+      +
+      forward.x,
+
+      eye[1],
+
+      eye[2]
+      +
+      forward.z
+    ];
+
+
+    const up = [
+      0,
+      1,
+      0
+    ];
+
+
+    return this.createLookAtMatrix(
+      eye,
+      target,
+      up
+    );
+  }
+
+
+  getForwardVector() {
+
+    switch (
+      this.player.direction
+      ) {
+
+      case "NORTH":
+
+        return {
+          x: 0,
+          z: -1
+        };
+
+
+      case "EAST":
+
+        return {
+          x: 1,
+          z: 0
+        };
+
+
+      case "SOUTH":
+
+        return {
+          x: 0,
+          z: 1
+        };
+
+
+      case "WEST":
+
+        return {
+          x: -1,
+          z: 0
+        };
+
+
+      default:
+
+        return {
+          x: 0,
+          z: -1
+        };
+    }
+  }
+
+
+  // =========================================================
+  // PERSPECTIVE MATRIX
+  // =========================================================
+
+  createPerspectiveMatrix(
+    fieldOfView,
+    aspect,
+    near,
+    far
+  ) {
+
+    const f =
+      1.0
+      /
+      Math.tan(
+        fieldOfView / 2
+      );
+
+
+    const rangeInverse =
+      1
+      /
+      (
+        near - far
+      );
+
+
+    return new Float32Array([
+
+      f / aspect,
+      0,
+      0,
+      0,
+
+
+      0,
+      f,
+      0,
+      0,
+
+
+      0,
+      0,
+      (
+        near + far
+      )
+      *
+      rangeInverse,
+      -1,
+
+
+      0,
+      0,
+      (
+        2
+        *
+        near
+        *
+        far
+      )
+      *
+      rangeInverse,
+      0
+    ]);
+  }
+
+
+  // =========================================================
+  // LOOK-AT MATRIX
+  // =========================================================
+
+  createLookAtMatrix(
+    eye,
+    target,
+    up
+  ) {
+
+    /*
+     * Camera backwards axis.
+     */
+
+    const zAxis =
+      this.normalize([
+
+        eye[0]
+        -
+        target[0],
+
+        eye[1]
+        -
+        target[1],
+
+        eye[2]
+        -
+        target[2]
+      ]);
+
+
+    /*
+     * Camera right axis.
+     */
+
+    const xAxis =
+      this.normalize(
+        this.cross(
+          up,
+          zAxis
+        )
+      );
+
+
+    /*
+     * Camera up axis.
+     */
+
+    const yAxis =
+      this.cross(
+        zAxis,
+        xAxis
+      );
+
+
+    return new Float32Array([
+
+      xAxis[0],
+      yAxis[0],
+      zAxis[0],
+      0,
+
+
+      xAxis[1],
+      yAxis[1],
+      zAxis[1],
+      0,
+
+
+      xAxis[2],
+      yAxis[2],
+      zAxis[2],
+      0,
+
+
+      -this.dot(
+        xAxis,
+        eye
+      ),
+
+      -this.dot(
+        yAxis,
+        eye
+      ),
+
+      -this.dot(
+        zAxis,
+        eye
+      ),
+
+      1
+    ]);
+  }
+
+
+  // =========================================================
+  // VECTOR HELPERS
+  // =========================================================
+
+  normalize(vector) {
+
+    const length =
+      Math.sqrt(
+
+        vector[0]
+        *
+        vector[0]
+
+        +
+
+        vector[1]
+        *
+        vector[1]
+
+        +
+
+        vector[2]
+        *
+        vector[2]
+      );
+
+
+    if (length === 0) {
+
+      return [
+        0,
+        0,
+        0
+      ];
+    }
+
+
+    return [
+
+      vector[0]
+      /
+      length,
+
+      vector[1]
+      /
+      length,
+
+      vector[2]
+      /
+      length
+    ];
+  }
+
+
+  cross(a, b) {
+
+    return [
+
+      a[1] * b[2]
+      -
+      a[2] * b[1],
+
+
+      a[2] * b[0]
+      -
+      a[0] * b[2],
+
+
+      a[0] * b[1]
+      -
+      a[1] * b[0]
+    ];
+  }
+
+
+  dot(a, b) {
+
+    return (
+
+      a[0] * b[0]
+
+      +
+
+      a[1] * b[1]
+
+      +
+
+      a[2] * b[2]
+    );
+  }
+
+
+  degreesToRadians(
+    degrees
+  ) {
+
+    return (
+
+      degrees
+      *
+      Math.PI
+      /
+      180
+    );
   }
 }

@@ -62,6 +62,8 @@ const pathfinder =
 const controller =
   new GameController(dungeon, player, wizard, pathfinder);
 
+const canvas =
+  document.getElementById("dungeon-view");
 
 // Create debug renderer
 const debugRenderer =
@@ -74,6 +76,7 @@ const debugRenderer =
 //3d render
 const dungeonRenderer =
   new DungeonRenderer(
+    canvas,
     dungeon,
     player,
     wizard
@@ -83,10 +86,7 @@ const dungeonRenderer =
 // Render current game state
 function render() {
 
-  document
-    .getElementById("dungeon-view")
-    .innerHTML =
-    dungeonRenderer.render();
+  dungeonRenderer.render();
 
   document
     .getElementById("debug-view")

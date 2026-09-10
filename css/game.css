@@ -1,13 +1,6 @@
 #dungeon-view {
   width: 640px;
   height: 480px;
-
-  margin: 0 auto;
-
-  background: black;
-
-  overflow: hidden;
-
   image-rendering: pixelated;
 }
 
