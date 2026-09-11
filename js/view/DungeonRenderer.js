@@ -6,6 +6,7 @@ export class DungeonRenderer {
     this.player = player;
     this.wizard = wizard;
 
+    this.animationTime = 0;
     this.exitAnimationFrame = 0;
     this.exitAnimationLastTime = 0;
     this.exitAnimationSpeed = 400;
@@ -177,21 +178,30 @@ export class DungeonRenderer {
 
 
     const fragmentShaderSource = `
-      precision mediump float;
+  precision mediump float;
 
-      uniform sampler2D u_texture;
+  uniform sampler2D u_texture;
 
-      varying vec2 v_texCoord;
+  varying vec2 v_texCoord;
 
-      void main() {
+  void main() {
 
-        gl_FragColor =
-          texture2D(
-            u_texture,
-            v_texCoord
-          );
-      }
-    `;
+    vec4 color =
+      texture2D(
+        u_texture,
+        v_texCoord
+      );
+
+
+    if (color.a < 0.1) {
+      discard;
+    }
+
+
+    gl_FragColor =
+      color;
+  }
+`;
 
 
     const vertexShader =
@@ -1444,7 +1454,7 @@ export class DungeonRenderer {
         // Artifact
         if (room.hasArtifact()) {
 
-          this.drawBillboardSprite(
+          this.drawFloatingBillboardSprite(
             row,
             col,
             this.artifactTexture,
@@ -1457,7 +1467,7 @@ export class DungeonRenderer {
         // Potion
         if (room.hasPotion) {
 
-          this.drawBillboardSprite(
+          this.drawFloatingBillboardSprite(
             row,
             col,
             this.potionTexture,
@@ -1613,6 +1623,126 @@ export class DungeonRenderer {
     );
   }
 
+  drawFloatingBillboardSprite(
+    row,
+    col,
+    texture,
+    width,
+    height
+  ) {
+
+    if (!texture) {
+      return;
+    }
+
+
+    const centerX =
+      col + 0.5;
+
+    const centerZ =
+      row + 0.5;
+
+
+    const forward =
+      this.getForwardVector();
+
+
+    const rightX =
+      -forward.z;
+
+    const rightZ =
+      forward.x;
+
+
+    const halfWidth =
+      width / 2;
+
+
+    const leftX =
+      centerX
+      -
+      rightX * halfWidth;
+
+    const leftZ =
+      centerZ
+      -
+      rightZ * halfWidth;
+
+
+    const rightXPosition =
+      centerX
+      +
+      rightX * halfWidth;
+
+    const rightZPosition =
+      centerZ
+      +
+      rightZ * halfWidth;
+
+
+    // Small vertical bob
+    const bob =
+      Math.sin(
+        this.animationTime * 0.003
+      )
+      *
+      0.04;
+
+
+    // Middle of the room
+    const centerY =
+      0.5 + bob;
+
+
+    const bottom =
+      centerY
+      -
+      height / 2;
+
+    const top =
+      centerY
+      +
+      height / 2;
+
+
+    const vertices = [];
+
+
+    this.addQuad(
+      vertices,
+
+      [
+        leftX,
+        bottom,
+        leftZ
+      ],
+
+      [
+        rightXPosition,
+        bottom,
+        rightZPosition
+      ],
+
+      [
+        rightXPosition,
+        top,
+        rightZPosition
+      ],
+
+      [
+        leftX,
+        top,
+        leftZ
+      ]
+    );
+
+
+    this.uploadDynamicSprite(
+      vertices,
+      texture
+    );
+  }
+
 
   // =========================================================
   // FLOOR SPRITE
@@ -1713,6 +1843,10 @@ export class DungeonRenderer {
 
     const animate = (timestamp) => {
 
+      this.animationTime =
+        timestamp;
+
+
       if (
         timestamp
         -
@@ -1756,7 +1890,8 @@ export class DungeonRenderer {
     texture
   ) {
 
-    const gl = this.gl;
+    const gl =
+      this.gl;
 
 
     gl.bindBuffer(
@@ -1774,10 +1909,6 @@ export class DungeonRenderer {
     );
 
 
-    /*
-     * PNG transparency.
-     */
-
     gl.enable(
       gl.BLEND
     );
@@ -1789,13 +1920,9 @@ export class DungeonRenderer {
     );
 
 
-    /*
-     * Prevent transparent parts of the PNG
-     * from writing to the depth buffer.
-     */
-
+    // Sprites participate in depth normally.
     gl.depthMask(
-      false
+      true
     );
 
 
@@ -1803,11 +1930,6 @@ export class DungeonRenderer {
       this.spriteBuffer,
       6,
       texture
-    );
-
-
-    gl.depthMask(
-      true
     );
 
 
