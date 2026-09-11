@@ -1,9 +1,10 @@
 export class DungeonDebugRenderer {
 
-  constructor(dungeon, player, wizard) {
+  constructor(dungeon, player, wizard, pathfinder) {
     this.dungeon = dungeon;
     this.player = player;
     this.wizard = wizard;
+    this.pathfinder = pathfinder;
   }
 
   render() {

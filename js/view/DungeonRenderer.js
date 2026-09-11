@@ -6,6 +6,10 @@ export class DungeonRenderer {
     this.player = player;
     this.wizard = wizard;
 
+    this.exitAnimationFrame = 0;
+    this.exitAnimationLastTime = 0;
+    this.exitAnimationSpeed = 400;
+
     // =========================================================
     // WEBGL CONTEXT
     // =========================================================
@@ -31,7 +35,8 @@ export class DungeonRenderer {
       wizard: "assets/images/wizard.png",
       artifact: "assets/images/artifact.png",
       potion: "assets/images/potion.png",
-      trap: "assets/images/trap.png"
+      trap: "assets/images/trap.png",
+      exit: "assets/images/HIVA.png"
     };
 
 
@@ -82,9 +87,12 @@ export class DungeonRenderer {
     this.artifactTexture = null;
     this.potionTexture = null;
     this.trapTexture = null;
+    this.exitTexture = null;
 
 
     this.initialize();
+
+    this.startAnimationLoop();
   }
 
 
@@ -912,6 +920,184 @@ export class DungeonRenderer {
     );
   }
 
+  addQuadWithUV(
+    vertices,
+    bottomLeft,
+    bottomRight,
+    topRight,
+    topLeft,
+    uMin,
+    uMax
+  ) {
+
+    // Triangle 1
+    this.addVertex(
+      vertices,
+      bottomLeft,
+      uMin,
+      1
+    );
+
+    this.addVertex(
+      vertices,
+      bottomRight,
+      uMax,
+      1
+    );
+
+    this.addVertex(
+      vertices,
+      topRight,
+      uMax,
+      0
+    );
+
+
+    // Triangle 2
+    this.addVertex(
+      vertices,
+      bottomLeft,
+      uMin,
+      1
+    );
+
+    this.addVertex(
+      vertices,
+      topRight,
+      uMax,
+      0
+    );
+
+    this.addVertex(
+      vertices,
+      topLeft,
+      uMin,
+      0
+    );
+  }
+
+  drawAnimatedBillboardSprite(
+    row,
+    col,
+    texture,
+    width,
+    height,
+    frameIndex,
+    frameCount
+  ) {
+
+    if (!texture) {
+      return;
+    }
+
+
+    const centerX =
+      col + 0.5;
+
+    const centerZ =
+      row + 0.5;
+
+
+    const forward =
+      this.getForwardVector();
+
+
+    const rightX =
+      -forward.z;
+
+    const rightZ =
+      forward.x;
+
+
+    const halfWidth =
+      width / 2;
+
+
+    const leftX =
+      centerX
+      -
+      rightX * halfWidth;
+
+    const leftZ =
+      centerZ
+      -
+      rightZ * halfWidth;
+
+
+    const rightXPosition =
+      centerX
+      +
+      rightX * halfWidth;
+
+    const rightZPosition =
+      centerZ
+      +
+      rightZ * halfWidth;
+
+
+    const bottom = 0.02;
+    const top =
+      bottom + height;
+
+
+    /*
+     * HIVA.png:
+     *
+     * frame 0 = left half
+     * frame 1 = right half
+     */
+
+    const frameWidth =
+      1 / frameCount;
+
+    const uMin =
+      frameIndex * frameWidth;
+
+    const uMax =
+      uMin + frameWidth;
+
+
+    const vertices = [];
+
+
+    this.addQuadWithUV(
+      vertices,
+
+      [
+        leftX,
+        bottom,
+        leftZ
+      ],
+
+      [
+        rightXPosition,
+        bottom,
+        rightZPosition
+      ],
+
+      [
+        rightXPosition,
+        top,
+        rightZPosition
+      ],
+
+      [
+        leftX,
+        top,
+        leftZ
+      ],
+
+      uMin,
+      uMax
+    );
+
+
+    this.uploadDynamicSprite(
+      vertices,
+      texture
+    );
+  }
+
 
   // =========================================================
   // TEXTURES
@@ -971,6 +1157,12 @@ export class DungeonRenderer {
     this.trapTexture =
       this.loadTexture(
         this.texturePaths.trap,
+        false
+      );
+
+    this.exitTexture =
+      this.loadTexture(
+        this.texturePaths.exit,
         false
       );
   }
@@ -1209,6 +1401,12 @@ export class DungeonRenderer {
     // ---------------------------------------------------------
 
     this.drawRoomObjects();
+
+
+    // ---------------------------------------------------------
+    // EXIT SPRITE, HIVA
+    // ---------------------------------------------------------
+    this.drawExitSprite();
 
 
     // ---------------------------------------------------------
@@ -1488,6 +1686,63 @@ export class DungeonRenderer {
     this.uploadDynamicSprite(
       vertices,
       texture
+    );
+  }
+
+  drawExitSprite() {
+
+    const row =
+      this.dungeon.exitPosition.row;
+
+    const col =
+      this.dungeon.exitPosition.col;
+
+
+    this.drawAnimatedBillboardSprite(
+      row,
+      col,
+      this.exitTexture,
+      0.45,
+      0.60,
+      this.exitAnimationFrame,
+      2
+    );
+  }
+
+  startAnimationLoop() {
+
+    const animate = (timestamp) => {
+
+      if (
+        timestamp
+        -
+        this.exitAnimationLastTime
+        >=
+        this.exitAnimationSpeed
+      ) {
+
+        this.exitAnimationFrame =
+          (
+            this.exitAnimationFrame + 1
+          )
+          %
+          2;
+
+        this.exitAnimationLastTime =
+          timestamp;
+      }
+
+
+      this.render();
+
+      requestAnimationFrame(
+        animate
+      );
+    };
+
+
+    requestAnimationFrame(
+      animate
     );
   }
 

@@ -42,3 +42,450 @@
 .wizard-near {
   width: 35%;
 }
+
+/* =========================================================
+   DEATH SCREEN
+   ========================================================= */
+
+#death-overlay {
+  position: fixed;
+
+  top: 0;
+  left: 0;
+
+  width: 100vw;
+  height: 100vh;
+
+  background-color: rgba(120, 0, 0, 0);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 9999;
+
+  pointer-events: none;
+}
+
+
+/*
+ * Added when the player dies.
+ */
+#death-overlay.active {
+  pointer-events: auto;
+
+  animation:
+    death-red-fade
+    2s
+    ease-in
+    forwards;
+}
+
+
+/* =========================================================
+   CONTENT
+   ========================================================= */
+
+#death-content {
+  text-align: center;
+}
+
+
+#death-title {
+  opacity: 0;
+
+  color: #e6d5c3;
+
+  font-family: Georgia, serif;
+
+  font-size: 72px;
+  font-weight: normal;
+
+  letter-spacing: 8px;
+
+  text-transform: uppercase;
+
+  text-shadow:
+    0 0 8px #000000,
+    0 0 18px #380000;
+
+  margin-bottom: 40px;
+}
+
+
+#death-overlay.active #death-title {
+
+  animation:
+    death-title-fade
+    1.5s
+    ease-out
+    2s
+    forwards;
+}
+
+
+/* =========================================================
+   PLAY AGAIN BUTTON
+   ========================================================= */
+
+#play-again-button {
+  opacity: 0;
+
+  padding: 14px 30px;
+
+  font-size: 18px;
+
+  color: #e6d5c3;
+
+  background-color: rgba(
+    0,
+    0,
+    0,
+    0.65
+  );
+
+  border: 2px solid #e6d5c3;
+
+  cursor: pointer;
+}
+
+
+#play-again-button:hover {
+  background-color: rgba(
+    0,
+    0,
+    0,
+    0.9
+  );
+}
+
+
+#death-overlay.active #play-again-button {
+
+  animation:
+    death-button-fade
+    1s
+    ease-out
+    3.5s
+    forwards;
+}
+
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+
+@keyframes death-red-fade {
+
+  from {
+    background-color:
+      rgba(120, 0, 0, 0);
+  }
+
+  to {
+    background-color:
+      rgba(120, 0, 0, 1);
+  }
+}
+
+
+@keyframes death-title-fade {
+
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+
+@keyframes death-button-fade {
+
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* =========================================================
+   WIN SCREEN
+   ========================================================= */
+
+#win-overlay {
+  position: fixed;
+
+  top: 0;
+  left: 0;
+
+  width: 100vw;
+  height: 100vh;
+
+  background-color: rgba(10, 30, 20, 0);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 9998;
+
+  pointer-events: none;
+}
+
+
+/*
+ * Added when the player wins.
+ */
+#win-overlay.active {
+  pointer-events: auto;
+
+  animation:
+    win-background-fade
+    2s
+    ease-in
+    forwards;
+}
+
+
+/* =========================================================
+   CONTENT
+   ========================================================= */
+
+#win-content {
+  text-align: center;
+}
+
+
+#win-title {
+  opacity: 0;
+
+  color: #e8d7a8;
+
+  font-family: Georgia, serif;
+
+  font-size: 72px;
+  font-weight: normal;
+
+  letter-spacing: 8px;
+
+  text-transform: uppercase;
+
+  text-shadow:
+    0 0 8px #000000,
+    0 0 20px #857341;
+
+  margin-bottom: 20px;
+}
+
+
+#win-overlay.active #win-title {
+  animation:
+    win-title-fade
+    1.5s
+    ease-out
+    2s
+    forwards;
+}
+
+
+/* =========================================================
+   SUBTITLE
+   ========================================================= */
+
+#win-subtitle {
+  opacity: 0;
+
+  color: #d5c79f;
+
+  font-family: Georgia, serif;
+
+  font-size: 24px;
+
+  letter-spacing: 3px;
+
+  margin-bottom: 40px;
+}
+
+
+#win-overlay.active #win-subtitle {
+  animation:
+    win-subtitle-fade
+    1.25s
+    ease-out
+    3s
+    forwards;
+}
+
+
+/* =========================================================
+   PLAY AGAIN BUTTON
+   ========================================================= */
+
+#win-play-again-button {
+  opacity: 0;
+
+  padding: 14px 30px;
+
+  font-size: 18px;
+
+  color: #e8d7a8;
+
+  background-color: rgba(
+    0,
+    0,
+    0,
+    0.65
+  );
+
+  border: 2px solid #e8d7a8;
+
+  cursor: pointer;
+}
+
+
+#win-play-again-button:hover {
+  background-color: rgba(
+    0,
+    0,
+    0,
+    0.9
+  );
+}
+
+
+#win-overlay.active #win-play-again-button {
+  animation:
+    win-button-fade
+    1s
+    ease-out
+    4s
+    forwards;
+}
+
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+
+@keyframes win-background-fade {
+
+  from {
+    background-color:
+      rgba(10, 30, 20, 0);
+  }
+
+  to {
+    background-color:
+      rgba(10, 30, 20, 0.96);
+  }
+}
+
+
+@keyframes win-title-fade {
+
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+
+@keyframes win-subtitle-fade {
+
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+
+@keyframes win-button-fade {
+
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* =========================================================
+   HUD
+   ========================================================= */
+
+#hud {
+  position: fixed;
+
+  top: 20px;
+  right: 20px;
+
+  z-index: 1000;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: flex-end;
+
+  gap: 10px;
+
+  pointer-events: none;
+}
+
+
+#health-display {
+  display: flex;
+  gap: 8px;
+}
+
+
+.heart {
+  width: 40px;
+  height: 40px;
+
+  image-rendering: pixelated;
+}
+
+
+/* =========================================================
+   POTIONS / ARTIFACTS
+   ========================================================= */
+
+#potion-display,
+#artifact-display {
+
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  font-family: monospace;
+  font-size: 24px;
+
+  color: white;
+
+  text-shadow:
+    2px 2px 0 #000000;
+}
+
+
+#potion-hud-icon,
+#artifact-hud-icon {
+
+  width: 36px;
+  height: 36px;
+
+  object-fit: contain;
+
+  image-rendering: pixelated;
+}

@@ -9,7 +9,7 @@ export class Player {
     this.artifacts = 0;
     this.potions = 0;
 
-    this.direction = "NORTH";
+    this.direction = "EAST";
   }
 
   collectPotion() {

@@ -12,8 +12,6 @@
 <body>
 
 <main id="game">
-  <h1>Wizard Dungeon</h1>
-
   <canvas
     id="dungeon-view"
     width="640"
@@ -23,13 +21,31 @@
   <pre id="debug-view"></pre>
 
   <div id="hud">
-    <span id="health">HP: 3</span>
-    <span id="keys">Artifacts: 0 / 3</span>
-    <span id="potions">Potions: 0</span>
-  </div>
+    <div id="health-display"></div>
+    <div id="potion-display">
 
-  <div id="status">
-    Explore the dungeon.
+      <img
+        id="potion-hud-icon"
+        src="assets/images/potion.png"
+        alt="Potion"
+      >
+
+      <span id="potion-count">
+    0
+  </span>
+
+    </div>
+    <div id="artifact-display">
+      <img
+        id="artifact-hud-icon"
+        src="assets/images/artifact.png"
+        alt="Artifact"
+      >
+
+      <span id="artifact-count">
+      0 / 3
+    </span>
+    </div>
   </div>
 
   <div id="controls">
@@ -39,6 +55,42 @@
     <button id="use-potion">Use Potion</button>
   </div>
 </main>
+
+<div id="death-overlay">
+
+  <div id="death-content">
+
+    <div id="death-title">
+      You Died
+    </div>
+
+    <button id="play-again-button">
+      Play Again
+    </button>
+
+  </div>
+
+</div>
+
+<div id="win-overlay">
+
+  <div id="win-content">
+
+    <div id="win-title">
+      Victory
+    </div>
+
+    <div id="win-subtitle">
+      You Escaped Tunnel Run
+    </div>
+
+    <button id="win-play-again-button">
+      Play Again
+    </button>
+
+  </div>
+
+</div>
 
 <script type="module" src="js/game.js"></script>
 

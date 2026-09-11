@@ -18,62 +18,93 @@ import {
   Player
 } from "./model/Player.js";
 
-import { Wizard } from "./model/Wizard.js";
+import {
+  Wizard
+} from "./model/Wizard.js";
 
-import { AStar } from "./pathfinding/AStar.js";
+import {
+  AStar
+} from "./pathfinding/AStar.js";
 
 import {
   GameController
 } from "./controller/GameController.js";
 
 
-// Generate dungeon
+// =========================================================
+// GAME SETUP
+// =========================================================
+
 const generator =
-  new DungeonGenerator(10, 10);
+  new DungeonGenerator(
+    10,
+    10
+  );
 
 const dungeon =
   generator.generateDungeon();
 
-// Populate dungeon
+
 const populator =
-  new DungeonPopulator(dungeon);
+  new DungeonPopulator(
+    dungeon
+  );
 
 populator.populate();
 
 
-// Create player at dungeon start
+// =========================================================
+// PLAYER
+// =========================================================
+
 const player =
   new Player(
     dungeon.playerStart.row,
     dungeon.playerStart.col
   );
 
-// Create Wizard at dungeon exit
+
+setInitialPlayerDirection();
+
+
+// =========================================================
+// WIZARD
+// =========================================================
+
 const wizard =
   new Wizard(
     dungeon.exitPosition.row,
     dungeon.exitPosition.col
   );
 
+
+// =========================================================
+// CONTROLLER
+// =========================================================
+
 const pathfinder =
   new AStar();
 
-// Create controller
+
 const controller =
-  new GameController(dungeon, player, wizard, pathfinder);
-
-const canvas =
-  document.getElementById("dungeon-view");
-
-// Create debug renderer
-const debugRenderer =
-  new DungeonDebugRenderer(
+  new GameController(
     dungeon,
     player,
-    wizard
+    wizard,
+    pathfinder
   );
 
-//3d render
+
+// =========================================================
+// RENDERERS
+// =========================================================
+
+const canvas =
+  document.getElementById(
+    "dungeon-view"
+  );
+
+
 const dungeonRenderer =
   new DungeonRenderer(
     canvas,
@@ -83,84 +114,310 @@ const dungeonRenderer =
   );
 
 
-// Render current game state
-function render() {
+const debugRenderer =
+  new DungeonDebugRenderer(
+    dungeon,
+    player,
+    wizard
+  );
 
-  dungeonRenderer.render();
 
-  document
-    .getElementById("debug-view")
-    .textContent =
-    debugRenderer.render();
+// =========================================================
+// DOM REFERENCES
+// =========================================================
 
-  document
-    .getElementById("health")
-    .textContent =
-    `HP: ${player.hp}`;
+const healthDisplay =
+  document.getElementById(
+    "health-display"
+  );
 
-  document
-    .getElementById("keys")
-    .textContent =
-    `Artifacts: ${player.artifacts} / 3`;
 
-  document
-    .getElementById("potions")
-    .textContent =
-    `Potions: ${player.potions}`;
+const potionCount =
+  document.getElementById(
+    "potion-count"
+  );
 
-  const status =
-    document.getElementById("status");
 
-  if (controller.gameWon) {
-    status.textContent =
-      "You escaped the dungeon!";
-  } else if (controller.gameOver) {
-    status.textContent =
-      "You died.";
-  } else {
-    status.textContent =
-      "Explore the dungeon.";
+const artifactCount =
+  document.getElementById(
+    "artifact-count"
+  );
+
+
+const debugView =
+  document.getElementById(
+    "debug-view"
+  );
+
+
+const deathOverlay =
+  document.getElementById(
+    "death-overlay"
+  );
+
+
+const winOverlay =
+  document.getElementById(
+    "win-overlay"
+  );
+
+
+const playAgainButton =
+  document.getElementById(
+    "play-again-button"
+  );
+
+
+const winPlayAgainButton =
+  document.getElementById(
+    "win-play-again-button"
+  );
+
+
+// =========================================================
+// GAME STATE
+// =========================================================
+
+let deathScreenShown = false;
+let winScreenShown = false;
+
+
+// =========================================================
+// INITIAL PLAYER DIRECTION
+// =========================================================
+
+function setInitialPlayerDirection() {
+
+  const startRoom =
+    dungeon.getRoom(
+      player.row,
+      player.col
+    );
+
+
+  if (startRoom.eastDoor) {
+
+    player.direction =
+      "EAST";
+
+  }
+  else {
+
+    player.direction =
+      "SOUTH";
   }
 }
 
-//TEMPORARY FOR DEBUGGING
-console.log(
-  "HP:", player.hp,
-  "Artifacts:", player.artifacts,
-  "Game Over:", controller.gameOver,
-  "Game Won:", controller.gameWon
+
+// =========================================================
+// HEALTH HUD
+// =========================================================
+
+function updateHealthHUD() {
+
+  healthDisplay.innerHTML = "";
+
+
+  for (
+    let i = 0;
+    i < player.maxHp;
+    i++
+  ) {
+
+    const heart =
+      document.createElement(
+        "img"
+      );
+
+
+    heart.classList.add(
+      "heart"
+    );
+
+
+    heart.src =
+      i < player.hp
+        ? "assets/images/heart.png"
+        : "assets/images/heart_empty.png";
+
+
+    healthDisplay.appendChild(
+      heart
+    );
+  }
+}
+
+
+// =========================================================
+// INVENTORY HUD
+// =========================================================
+
+function updateInventoryHUD() {
+
+  potionCount.textContent =
+    player.potions;
+
+
+  artifactCount.textContent =
+    `${player.artifacts} / 3`;
+}
+
+
+// =========================================================
+// END SCREENS
+// =========================================================
+
+function showDeathScreen() {
+
+  if (deathScreenShown) {
+    return;
+  }
+
+
+  deathScreenShown = true;
+
+
+  deathOverlay.classList.add(
+    "active"
+  );
+}
+
+
+function showWinScreen() {
+
+  if (winScreenShown) {
+    return;
+  }
+
+
+  winScreenShown = true;
+
+
+  winOverlay.classList.add(
+    "active"
+  );
+}
+
+
+// =========================================================
+// UI UPDATE
+// =========================================================
+
+function updateGameUI() {
+
+  updateHealthHUD();
+
+  updateInventoryHUD();
+
+
+  // Temporary debug map
+  debugView.textContent =
+    debugRenderer.render();
+
+
+  if (controller.gameWon) {
+
+    showWinScreen();
+
+    return;
+  }
+
+
+  if (controller.gameOver) {
+
+    showDeathScreen();
+  }
+}
+
+
+// =========================================================
+// PLAYER CONTROLS
+// =========================================================
+
+document
+  .getElementById(
+    "turn-left"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      controller.turnLeft();
+
+      updateGameUI();
+    }
+  );
+
+
+document
+  .getElementById(
+    "move-forward"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      controller.moveForward();
+
+      updateGameUI();
+    }
+  );
+
+
+document
+  .getElementById(
+    "turn-right"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      controller.turnRight();
+
+      updateGameUI();
+    }
+  );
+
+
+document
+  .getElementById(
+    "use-potion"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      controller.usePotion();
+
+      updateGameUI();
+    }
+  );
+
+
+// =========================================================
+// REPLAY BUTTONS
+// =========================================================
+
+function restartGame() {
+
+  window.location.reload();
+}
+
+
+playAgainButton.addEventListener(
+  "click",
+  restartGame
 );
 
-// Button controls
-document
-  .getElementById("turn-left")
-  .addEventListener("click", () => {
-    controller.turnLeft();
-    render();
-  });
 
-document
-  .getElementById("move-forward")
-  .addEventListener("click", () => {
-    controller.moveForward();
-    render();
-  });
-
-document
-  .getElementById("turn-right")
-  .addEventListener("click", () => {
-    controller.turnRight();
-    render();
-  });
-
-document
-  .getElementById("use-potion")
-  .addEventListener("click", () => {
-    controller.usePotion();
-    render();
-  });
+winPlayAgainButton.addEventListener(
+  "click",
+  restartGame
+);
 
 
-// Initial render
-render();
+// =========================================================
+// INITIAL UI
+// =========================================================
 
+updateGameUI();
