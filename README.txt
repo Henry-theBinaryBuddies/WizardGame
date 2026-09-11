@@ -60,6 +60,7 @@ SFX
 -Picking up item
 -Picking up artifact
 -Pain
+-Steps
 
 Home page
 -Video
