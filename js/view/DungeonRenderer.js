@@ -153,28 +153,35 @@ export class DungeonRenderer {
     const gl = this.gl;
 
     const vertexShaderSource = `
-      attribute vec3 a_position;
-      attribute vec2 a_texCoord;
+  attribute vec3 a_position;
+  attribute vec2 a_texCoord;
 
-      uniform mat4 u_projection;
-      uniform mat4 u_view;
+  uniform mat4 u_projection;
+  uniform mat4 u_view;
 
-      varying vec2 v_texCoord;
+  varying vec2 v_texCoord;
+  varying vec3 v_viewPosition;
 
-      void main() {
+  void main() {
 
-        gl_Position =
-          u_projection
-          * u_view
-          * vec4(
-              a_position,
-              1.0
-            );
+    vec4 viewPosition =
+      u_view
+      * vec4(
+          a_position,
+          1.0
+        );
 
-        v_texCoord =
-          a_texCoord;
-      }
-    `;
+    gl_Position =
+      u_projection
+      * viewPosition;
+
+    v_texCoord =
+      a_texCoord;
+
+    v_viewPosition =
+      viewPosition.xyz;
+  }
+`;
 
 
     const fragmentShaderSource = `
@@ -182,7 +189,12 @@ export class DungeonRenderer {
 
   uniform sampler2D u_texture;
 
+  uniform float u_fogStart;
+  uniform float u_fogEnd;
+  uniform vec3 u_fogColor;
+
   varying vec2 v_texCoord;
+  varying vec3 v_viewPosition;
 
   void main() {
 
@@ -193,13 +205,54 @@ export class DungeonRenderer {
       );
 
 
+    // Ignore transparent sprite pixels.
     if (color.a < 0.1) {
       discard;
     }
 
 
+    float distanceFromCamera =
+      length(
+        v_viewPosition
+      );
+
+
+    float fogAmount =
+      smoothstep(
+        u_fogStart,
+        u_fogEnd,
+        distanceFromCamera
+      );
+
+
+    // Objects become darker as they recede.
+    float brightness =
+      mix(
+        1.0,
+        0.40,
+        fogAmount
+      );
+
+
+    vec3 darkenedColor =
+      color.rgb
+      * brightness;
+
+
+    // Blend distant objects toward the dungeon fog color.
+    vec3 finalColor =
+      mix(
+        darkenedColor,
+        u_fogColor,
+        fogAmount * 0.80
+      );
+
+
     gl_FragColor =
-      color;
+      vec4(
+        finalColor,
+        color.a
+      );
   }
 `;
 
@@ -331,6 +384,26 @@ export class DungeonRenderer {
       gl.getUniformLocation(
         this.program,
         "u_texture"
+      );
+
+    this.fogStartLocation =
+      gl.getUniformLocation(
+        this.program,
+        "u_fogStart"
+      );
+
+
+    this.fogEndLocation =
+      gl.getUniformLocation(
+        this.program,
+        "u_fogEnd"
+      );
+
+
+    this.fogColorLocation =
+      gl.getUniformLocation(
+        this.program,
+        "u_fogColor"
       );
   }
 
@@ -1370,6 +1443,25 @@ export class DungeonRenderer {
     gl.uniform1i(
       this.samplerLocation,
       0
+    );
+
+    gl.uniform1f(
+      this.fogStartLocation,
+      1.0
+    );
+
+
+    gl.uniform1f(
+      this.fogEndLocation,
+      5.5
+    );
+
+
+    gl.uniform3f(
+      this.fogColorLocation,
+      0.03,
+      0.04,
+      0.03
     );
 
 

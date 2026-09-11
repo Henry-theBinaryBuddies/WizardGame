@@ -47,9 +47,10 @@ Licenses: OGA-BY 3.0
 Authors: ElizaWy, JaidynReiman, Stephen Challener (Redshrike), Johannes Sjölund (wulax)
 
 TODO:
-Shadow effects
+Motion blur
 Swap artifact assets to flowers, a potion, and cookies
-The images are clipping eachother
+Resizing
+
 Song
 -Needs splash page.
 SFX
@@ -64,4 +65,4 @@ Home page
 -Video
 -Merch
 -Game
-Inbed Map in console
+Embed Map in console

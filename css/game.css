@@ -81,7 +81,6 @@
     forwards;
 }
 
-
 /* =========================================================
    CONTENT
    ========================================================= */
@@ -418,6 +417,34 @@
   to {
     opacity: 1;
   }
+}
+
+#damage-overlay {
+  position: fixed;
+  inset: 0;
+
+  background: rgba(
+    255,
+    0,
+    0,
+    0
+  );
+
+  pointer-events: none;
+  z-index: 900;
+
+  transition:
+    background 0.15s ease-out;
+}
+
+
+#damage-overlay.active {
+  background: rgba(
+    255,
+    0,
+    0,
+    0.45
+  );
 }
 
 /* =========================================================

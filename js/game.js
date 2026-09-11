@@ -173,6 +173,68 @@ const winPlayAgainButton =
     "win-play-again-button"
   );
 
+const damageOverlay =
+  document.getElementById(
+    "damage-overlay"
+  );
+
+function flashDamageOverlay() {
+
+  damageOverlay.classList.remove(
+    "active"
+  );
+
+
+  // Forces the browser to reset the transition
+  void damageOverlay.offsetWidth;
+
+
+  damageOverlay.classList.add(
+    "active"
+  );
+
+
+  setTimeout(
+    () => {
+
+      damageOverlay.classList.remove(
+        "active"
+      );
+    },
+    150
+  );
+}
+
+
+function handlePlayerAction(
+  action
+) {
+
+  const hpBefore =
+    player.hp;
+
+
+  action();
+
+
+  const tookDamage =
+    player.hp < hpBefore;
+
+
+  if (
+    tookDamage
+    &&
+    player.hp > 0
+  ) {
+
+    flashDamageOverlay();
+  }
+
+
+  updateGameUI();
+}
+
+
 
 // =========================================================
 // GAME STATE
