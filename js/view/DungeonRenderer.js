@@ -90,6 +90,35 @@ export class DungeonRenderer {
     this.trapTexture = null;
     this.exitTexture = null;
 
+    // =========================================================
+// CAMERA ANIMATION
+// =========================================================
+
+    this.cameraX =
+      this.player.col + 0.5;
+
+    this.cameraZ =
+      this.player.row + 0.5;
+
+    this.cameraAngle =
+      this.directionToAngle(
+        this.player.direction
+      );
+
+    this.targetCameraX =
+      this.cameraX;
+
+    this.targetCameraZ =
+      this.cameraZ;
+
+    this.targetCameraAngle =
+      this.cameraAngle;
+
+    this.cameraMoveSpeed = 0.012;
+    this.cameraTurnSpeed = 0.012;
+
+    this.lastFrameTime = null;
+
 
     this.initialize();
 
@@ -1933,11 +1962,52 @@ export class DungeonRenderer {
 
   startAnimationLoop() {
 
-    const animate = (timestamp) => {
+    const animate = (
+      timestamp
+    ) => {
+
+      // -----------------------------------------
+      // FRAME TIMING
+      // -----------------------------------------
+
+      if (
+        this.lastFrameTime === null
+      ) {
+
+        this.lastFrameTime =
+          timestamp;
+      }
+
+
+      const deltaTime =
+        timestamp
+        - this.lastFrameTime;
+
+
+      this.lastFrameTime =
+        timestamp;
+
+
+      // -----------------------------------------
+      // CAMERA ANIMATION
+      // -----------------------------------------
+
+      this.updateCamera(
+        deltaTime
+      );
+
+
+      // -----------------------------------------
+      // GENERAL ANIMATION TIME
+      // -----------------------------------------
 
       this.animationTime =
         timestamp;
 
+
+      // -----------------------------------------
+      // EXIT NPC ANIMATION
+      // -----------------------------------------
 
       if (
         timestamp
@@ -1954,12 +2024,18 @@ export class DungeonRenderer {
           %
           2;
 
+
         this.exitAnimationLastTime =
           timestamp;
       }
 
 
+      // -----------------------------------------
+      // RENDER FRAME
+      // -----------------------------------------
+
       this.render();
+
 
       requestAnimationFrame(
         animate
@@ -2153,35 +2229,34 @@ export class DungeonRenderer {
 
   createViewMatrix() {
 
-    /*
-     * Player stands in the center of the room.
-     */
-
     const eye = [
 
-      this.player.col + 0.5,
+      this.cameraX,
 
       0.5,
 
-      this.player.row + 0.5
+      this.cameraZ
     ];
 
 
-    const forward =
-      this.getForwardVector();
+    const forwardX =
+      Math.sin(
+        this.cameraAngle
+      );
+
+    const forwardZ =
+      -Math.cos(
+        this.cameraAngle
+      );
 
 
     const target = [
 
-      eye[0]
-      +
-      forward.x,
+      eye[0] + forwardX,
 
       eye[1],
 
-      eye[2]
-      +
-      forward.z
+      eye[2] + forwardZ
     ];
 
 
@@ -2197,6 +2272,29 @@ export class DungeonRenderer {
       target,
       up
     );
+  }
+
+  directionToAngle(
+    direction
+  ) {
+
+    switch (direction) {
+
+      case "NORTH":
+        return 0;
+
+      case "EAST":
+        return Math.PI / 2;
+
+      case "SOUTH":
+        return Math.PI;
+
+      case "WEST":
+        return -Math.PI / 2;
+
+      default:
+        return 0;
+    }
   }
 
 
@@ -2245,6 +2343,72 @@ export class DungeonRenderer {
           z: -1
         };
     }
+  }
+
+  updateCamera(
+    deltaTime
+  ) {
+
+    this.targetCameraX =
+      this.player.col + 0.5;
+
+    this.targetCameraZ =
+      this.player.row + 0.5;
+
+    this.targetCameraAngle =
+      this.directionToAngle(
+        this.player.direction
+      );
+
+
+    const moveAmount =
+      Math.min(
+        1,
+        deltaTime
+        * this.cameraMoveSpeed
+      );
+
+
+    this.cameraX +=
+      (
+        this.targetCameraX
+        - this.cameraX
+      )
+      * moveAmount;
+
+
+    this.cameraZ +=
+      (
+        this.targetCameraZ
+        - this.cameraZ
+      )
+      * moveAmount;
+
+
+    // Find shortest rotational distance.
+    let angleDifference =
+      this.targetCameraAngle
+      - this.cameraAngle;
+
+
+    angleDifference =
+      Math.atan2(
+        Math.sin(angleDifference),
+        Math.cos(angleDifference)
+      );
+
+
+    const turnAmount =
+      Math.min(
+        1,
+        deltaTime
+        * this.cameraTurnSpeed
+      );
+
+
+    this.cameraAngle +=
+      angleDifference
+      * turnAmount;
   }
 
 

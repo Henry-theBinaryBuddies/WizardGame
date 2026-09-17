@@ -15,8 +15,8 @@
   <canvas
     id="dungeon-view"
 
-    width="640"
-    height="480">
+    width="1080"
+    height="720">
   </canvas>
 
   <pre id="debug-view"></pre>
@@ -50,10 +50,43 @@
   </div>
 
   <div id="controls">
-    <button id="turn-left">Turn Left</button>
-    <button id="move-forward">Forward</button>
-    <button id="turn-right">Turn Right</button>
-    <button id="use-potion">Use Potion</button>
+
+    <div id="movement-controls">
+
+      <button
+        id="turn-left"
+        class="game-control"
+        aria-label="Turn Left">
+        ↶
+      </button>
+
+      <button
+        id="turn-right"
+        class="game-control"
+        aria-label="Turn Right">
+        ↷
+      </button>
+
+    </div>
+
+
+    <div id="action-controls">
+
+      <button
+        id="use-potion"
+        class="game-control potion-control">
+        Potion
+      </button>
+
+      <button
+        id="move-forward"
+        class="game-control forward-control"
+        aria-label="Move Forward">
+        ↑
+      </button>
+
+    </div>
+
   </div>
 </main>
 
@@ -92,6 +125,9 @@
   </div>
 
 </div>
+
+<div id="damage-overlay"></div>
+
 
 <script type="module" src="js/game.js"></script>
 

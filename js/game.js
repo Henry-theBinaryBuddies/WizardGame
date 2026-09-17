@@ -419,9 +419,11 @@ document
     "click",
     () => {
 
-      controller.moveForward();
-
-      updateGameUI();
+      handlePlayerAction(
+        () => {
+          controller.moveForward();
+        }
+      );
     }
   );
 

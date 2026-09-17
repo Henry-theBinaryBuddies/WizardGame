@@ -4,6 +4,117 @@
   image-rendering: pixelated;
 }
 
+#game {
+  position: relative;
+
+  width: 640px;
+  height: 480px;
+}
+
+#controls {
+  position: absolute;
+
+  left: 0;
+  right: 0;
+  bottom: 18px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+
+  padding: 0 20px;
+
+  box-sizing: border-box;
+
+  z-index: 500;
+}
+
+#movement-controls,
+#action-controls {
+  display: flex;
+
+  gap: 12px;
+
+  align-items: flex-end;
+}
+
+
+#action-controls {
+  flex-direction: column;
+}
+
+.game-control {
+  width: 64px;
+  height: 64px;
+
+  border:
+    2px solid
+    rgba(
+      220,
+      220,
+      220,
+      0.7
+    );
+
+  border-radius: 8px;
+
+  background:
+    rgba(
+      0,
+      0,
+      0,
+      0.55
+    );
+
+  color: white;
+
+  font-family: monospace;
+  font-size: 32px;
+
+  cursor: pointer;
+
+  user-select: none;
+
+  text-shadow:
+    2px 2px 0
+    #000000;
+}
+
+
+.potion-control {
+  width: 76px;
+  height: 44px;
+
+  font-size: 14px;
+}
+
+
+.game-control:hover {
+  background:
+    rgba(
+      40,
+      40,
+      40,
+      0.8
+    );
+}
+
+
+.game-control:active {
+  background:
+    rgba(
+      100,
+      100,
+      100,
+      0.7
+    );
+
+  transform:
+    translateY(
+      2px
+    );
+}
+
 
 .dungeon-scene {
   position: relative;
@@ -452,7 +563,7 @@
    ========================================================= */
 
 #hud {
-  position: fixed;
+  position: absolute;
 
   top: 20px;
   right: 20px;
