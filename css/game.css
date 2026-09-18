@@ -1,14 +1,32 @@
 #dungeon-view {
-  width: 640px;
-  height: 480px;
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
   image-rendering: pixelated;
 }
 
 #game {
   position: relative;
 
-  width: 640px;
-  height: 480px;
+  width: 100vw;
+  height: 100vh;
+
+  overflow: hidden;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+
+  width: 100%;
+  height: 100%;
+
+  overflow: hidden;
+
+  background: #000000;
 }
 
 #controls {
@@ -16,13 +34,24 @@
 
   left: 0;
   right: 0;
-  bottom: 18px;
+
+  bottom: clamp(
+    8px,
+    3vw,
+    18px
+  );
 
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
 
-  padding: 0 20px;
+  padding:
+    0
+    clamp(
+      8px,
+      3vw,
+      20px
+    );
 
   box-sizing: border-box;
 
@@ -44,27 +73,17 @@
 }
 
 .game-control {
-  width: 64px;
-  height: 64px;
+  width: clamp(
+    48px,
+    10vw,
+    64px
+  );
 
-  border:
-    2px solid
-    rgba(
-      220,
-      220,
-      220,
-      0.7
-    );
-
-  border-radius: 8px;
-
-  background:
-    rgba(
-      0,
-      0,
-      0,
-      0.55
-    );
+  height: clamp(
+    48px,
+    10vw,
+    64px
+  );
 
   color: white;
 
@@ -82,10 +101,23 @@
 
 
 .potion-control {
-  width: 76px;
-  height: 44px;
+  width: clamp(
+    60px,
+    12vw,
+    76px
+  );
 
-  font-size: 14px;
+  height: clamp(
+    38px,
+    8vw,
+    44px
+  );
+
+  font-size: clamp(
+    11px,
+    2.5vw,
+    14px
+  );
 }
 
 
@@ -565,8 +597,17 @@
 #hud {
   position: absolute;
 
-  top: 20px;
-  right: 20px;
+  top: clamp(
+    8px,
+    3vw,
+    20px
+  );
+
+  right: clamp(
+    8px,
+    3vw,
+    20px
+  );
 
   z-index: 1000;
 
@@ -575,7 +616,11 @@
 
   align-items: flex-end;
 
-  gap: 10px;
+  gap: clamp(
+    4px,
+    1.5vw,
+    10px
+  );
 
   pointer-events: none;
 }
@@ -588,8 +633,17 @@
 
 
 .heart {
-  width: 40px;
-  height: 40px;
+  width: clamp(
+    28px,
+    6vw,
+    40px
+  );
+
+  height: clamp(
+    28px,
+    6vw,
+    40px
+  );
 
   image-rendering: pixelated;
 }
@@ -601,29 +655,31 @@
 
 #potion-display,
 #artifact-display {
-
-  display: flex;
-  align-items: center;
-
-  gap: 8px;
-
-  font-family: monospace;
-  font-size: 24px;
-
-  color: white;
-
-  text-shadow:
-    2px 2px 0 #000000;
+  font-size: clamp(
+    16px,
+    4vw,
+    24px
+  );
 }
 
 
 #potion-hud-icon,
 #artifact-hud-icon {
+  width: clamp(
+    26px,
+    5.5vw,
+    36px
+  );
 
-  width: 36px;
-  height: 36px;
+  height: clamp(
+    26px,
+    5.5vw,
+    36px
+  );
 
   object-fit: contain;
 
   image-rendering: pixelated;
 }
+
+

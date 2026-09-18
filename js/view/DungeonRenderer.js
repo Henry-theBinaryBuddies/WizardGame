@@ -1411,6 +1411,9 @@ export class DungeonRenderer {
   // =========================================================
 
   render() {
+
+    this.resizeCanvas();
+
     const gl = this.gl;
 
 
@@ -2678,5 +2681,48 @@ export class DungeonRenderer {
       /
       180
     );
+  }
+
+  resizeCanvas() {
+
+    const pixelRatio =
+      Math.min(
+        window.devicePixelRatio || 1,
+        2
+      );
+
+
+    const displayWidth =
+      Math.floor(
+        this.canvas.clientWidth
+        *
+        pixelRatio
+      );
+
+
+    const displayHeight =
+      Math.floor(
+        this.canvas.clientHeight
+        *
+        pixelRatio
+      );
+
+
+    if (
+      this.canvas.width
+      !==
+      displayWidth
+      ||
+      this.canvas.height
+      !==
+      displayHeight
+    ) {
+
+      this.canvas.width =
+        displayWidth;
+
+      this.canvas.height =
+        displayHeight;
+    }
   }
 }
