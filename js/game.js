@@ -138,11 +138,20 @@ const potionCount =
   );
 
 
-const artifactCount =
+const flowerArtifact =
   document.getElementById(
-    "artifact-count"
+    "hud-artifact-flower"
   );
 
+const greenPotionArtifact =
+  document.getElementById(
+    "hud-artifact-green-potion"
+  );
+
+const cookiesArtifact =
+  document.getElementById(
+    "hud-artifact-cookies"
+  );
 
 const debugView =
   document.getElementById(
@@ -320,8 +329,26 @@ function updateInventoryHUD() {
     player.potions;
 
 
-  artifactCount.textContent =
-    `${player.artifacts} / 3`;
+  flowerArtifact.classList.toggle(
+    "collected",
+    player.artifacts.includes(
+      "FLOWER"
+    )
+  );
+
+  greenPotionArtifact.classList.toggle(
+    "collected",
+    player.artifacts.includes(
+      "POTION_GREEN"
+    )
+  );
+
+  cookiesArtifact.classList.toggle(
+    "collected",
+    player.artifacts.includes(
+      "COOKIES"
+    )
+  );
 }
 
 

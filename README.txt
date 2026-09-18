@@ -47,10 +47,6 @@ Licenses: OGA-BY 3.0
 Authors: ElizaWy, JaidynReiman, Stephen Challener (Redshrike), Johannes Sjölund (wulax)
 
 TODO:
-Motion blur
-Swap artifact assets to flowers, a potion, and cookies
-Resizing
-
 Song
 -Needs splash page.
 SFX
@@ -60,6 +56,7 @@ SFX
 -Picking up item
 -Picking up artifact
 -Pain
+-Death
 -Steps
 
 Home page

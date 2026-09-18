@@ -21,9 +21,9 @@ export class DungeonPopulator {
 
   placeArtifacts() {
     const artifacts = [
-      "ARTIFACT_ONE",
-      "ARTIFACT_TWO",
-      "ARTIFACT_THREE"
+      "FLOWER",
+      "POTION_GREEN",
+      "COOKIES"
     ];
 
     for (const artifact of artifacts) {

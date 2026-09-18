@@ -1,3 +1,17 @@
+@font-face {
+  font-family: "DungeonPixel";
+  src: url("../assets/fonts/C&C Red Alert [INET].ttf")
+  format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+html,
+body,
+button {
+  font-family: "DungeonPixel", monospace;
+}
+
 #dungeon-view {
   display: block;
 
@@ -87,7 +101,6 @@ body {
 
   color: white;
 
-  font-family: monospace;
   font-size: 32px;
 
   cursor: pointer;
@@ -237,8 +250,6 @@ body {
   opacity: 0;
 
   color: #e6d5c3;
-
-  font-family: Georgia, serif;
 
   font-size: 72px;
   font-weight: normal;
@@ -407,8 +418,6 @@ body {
 
   color: #e8d7a8;
 
-  font-family: Georgia, serif;
-
   font-size: 72px;
   font-weight: normal;
 
@@ -442,8 +451,6 @@ body {
   opacity: 0;
 
   color: #d5c79f;
-
-  font-family: Georgia, serif;
 
   font-size: 24px;
 
@@ -653,28 +660,70 @@ body {
    POTIONS / ARTIFACTS
    ========================================================= */
 
-#potion-display,
-#artifact-display {
+#potion-display {
   font-size: clamp(
     16px,
     4vw,
     24px
   );
+
+  color: white;
+
+  text-shadow:
+  2px 2px 0px black;
 }
 
+#artifact-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-#potion-hud-icon,
-#artifact-hud-icon {
+.artifact-slot {
   width: clamp(
-    26px,
-    5.5vw,
-    36px
+    52px,
+    8vmin,
+    90px
   );
 
   height: clamp(
-    26px,
-    5.5vw,
-    36px
+    52px,
+    8vmin,
+    90px
+  );
+
+  object-fit: contain;
+  image-rendering: pixelated;
+
+  filter:
+    saturate(0%);
+
+  transition:
+  opacity 0.2s ease,
+  filter 0.2s ease,
+  transform 0.2s ease;
+}
+
+.artifact-slot.collected {
+  opacity: 1;
+
+  filter: none;
+
+  transform: scale(1.1);
+}
+
+
+#potion-hud-icon {
+  width: clamp(
+    52px,
+    8vmin,
+    90px
+  );
+
+  height: clamp(
+    52px,
+    8vmin,
+    90px
   );
 
   object-fit: contain;

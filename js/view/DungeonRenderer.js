@@ -34,7 +34,11 @@ export class DungeonRenderer {
       floor: "assets/images/floor_texture.png",
       ceiling: "assets/images/ceiling_texture.png",
       wizard: "assets/images/wizard.png",
-      artifact: "assets/images/artifact.png",
+
+      cookies: "assets/images/cookies.png",
+      flower: "assets/images/flower.png",
+      green_potion: "assets/images/green_potion.png",
+
       potion: "assets/images/potion.png",
       trap: "assets/images/trap.png",
       exit: "assets/images/HIVA.png"
@@ -85,7 +89,11 @@ export class DungeonRenderer {
     this.ceilingTexture = null;
 
     this.wizardTexture = null;
-    this.artifactTexture = null;
+
+    this.flowerTexture = null;
+    this.greenPotionTexture = null;
+    this.cookiesTexture = null;
+
     this.potionTexture = null;
     this.trapTexture = null;
     this.exitTexture = null;
@@ -1252,12 +1260,23 @@ export class DungeonRenderer {
       );
 
 
-    this.artifactTexture =
+    this.flowerTexture =
       this.loadTexture(
-        this.texturePaths.artifact,
+        this.texturePaths.flower,
         false
-      );
+      )
 
+    this.greenPotionTexture =
+      this.loadTexture(
+        this.texturePaths.green_potion,
+        false
+      )
+
+    this.cookiesTexture =
+      this.loadTexture(
+        this.texturePaths.cookies,
+        false
+      )
 
     this.potionTexture =
       this.loadTexture(
@@ -1550,6 +1569,26 @@ export class DungeonRenderer {
     this.drawWizard();
   }
 
+  getArtifactTexture(
+    artifact
+  ) {
+
+    switch (artifact) {
+
+      case "FLOWER":
+        return this.flowerTexture;
+
+      case "POTION_GREEN":
+        return this.greenPotionTexture;
+
+      case "COOKIES":
+        return this.cookiesTexture;
+
+      default:
+        return null;
+    }
+  }
+
 
   // =========================================================
   // ROOM OBJECTS
@@ -1575,18 +1614,25 @@ export class DungeonRenderer {
           );
 
 
-        // Artifact
-        if (room.hasArtifact()) {
+        // Artifacts
+        if (
+          room.hasArtifact()
+        ) {
+
+          const texture =
+            this.getArtifactTexture(
+              room.artifact
+            );
+
 
           this.drawFloatingBillboardSprite(
             row,
             col,
-            this.artifactTexture,
+            texture,
             0.40,
             0.40
           );
         }
-
 
         // Potion
         if (room.hasPotion) {

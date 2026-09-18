@@ -6,7 +6,7 @@ export class Player {
 
     this.maxHp = 3;
     this.hp = 3;
-    this.artifacts = 0;
+    this.artifacts = [];
     this.potions = 0;
 
     this.direction = "EAST";
@@ -46,8 +46,8 @@ export class Player {
     this.hp -= amount;
   }
 
-  collectArtifact() {
-    this.artifacts++;
+  collectArtifact(artifact) {
+    this.artifacts.push(artifact);
   }
 
   setPosition(row, col) {

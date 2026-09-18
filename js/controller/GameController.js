@@ -35,7 +35,7 @@ export class GameController {
 
     if (
       room.isExit
-      && this.player.artifacts >= 3
+      && this.player.artifacts.length === 3
     ) {
       this.gameWon = true;
       this.gameOver = true;
@@ -161,9 +161,7 @@ export class GameController {
     const artifact =
       room.removeArtifact();
 
-    if (artifact !== null) {
-      this.player.collectArtifact();
-    }
+    this.player.collectArtifact(artifact);
   }
 
   handlePotion(room) {
