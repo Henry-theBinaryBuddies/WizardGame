@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Tunnel Run II</title>
+
+  <link rel="stylesheet" href="css/game.css">
+</head>
+
+<body>
+
+<main id="game">
+  <canvas
+    id="dungeon-view"
+
+    width="1080"
+    height="720">
+  </canvas>
+
+  <pre id="debug-view"></pre>
+
+  <div id="hud">
+    <div id="health-display"></div>
+    <div id="potion-display">
+
+      <img
+        id="potion-hud-icon"
+        src="assets/images/potion.png"
+        alt="Potion"
+      >
+
+      <span id="potion-count">
+    0
+  </span>
+
+    </div>
+    <div id="artifact-display">
+      <img
+        id="hud-artifact-flower"
+        class="artifact-slot"
+        src="assets/images/flower.png"
+        alt="Flower"
+        >
+      <img
+        id="hud-artifact-green-potion"
+        class="artifact-slot"
+        src="assets/images/green_potion.png"
+        alt="Green Potion"
+        >
+      <img
+        id="hud-artifact-cookies"
+        class="artifact-slot"
+        src="assets/images/cookies.png"
+        alt="Cookies"
+        >
+    </div>
+  </div>
+
+  <div id="controls">
+
+    <div id="movement-controls">
+
+      <button
+        id="turn-left"
+        class="game-control"
+        aria-label="Turn Left">
+        ↶
+      </button>
+
+      <button
+        id="turn-right"
+        class="game-control"
+        aria-label="Turn Right">
+        ↷
+      </button>
+
+    </div>
+
+
+    <div id="action-controls">
+
+      <button
+        id="use-potion"
+        class="game-control potion-control">
+        Potion
+      </button>
+
+      <button
+        id="move-forward"
+        class="game-control forward-control"
+        aria-label="Move Forward">
+        ↑
+      </button>
+
+    </div>
+
+  </div>
+</main>
+
+<div id="death-overlay">
+
+  <div id="death-content">
+
+    <div id="death-title">
+      You Died
+    </div>
+
+    <button id="play-again-button">
+      Play Again
+    </button>
+
+  </div>
+
+</div>
+
+<div id="win-overlay">
+
+  <div id="win-content">
+
+    <div id="win-title">
+      Victory
+    </div>
+
+    <div id="win-subtitle">
+      You Escaped Tunnel Run
+    </div>
+
+    <button id="win-play-again-button">
+      Play Again
+    </button>
+
+  </div>
+
+</div>
+
+<div id="damage-overlay"></div>
+
+
+<script type="module" src="js/game.js"></script>
+
+</body>
+</html>
