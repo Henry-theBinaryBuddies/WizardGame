@@ -47,8 +47,11 @@ Licenses: OGA-BY 3.0
 Authors: ElizaWy, JaidynReiman, Stephen Challener (Redshrike), Johannes Sjölund (wulax)
 
 TODO:
+Fix Hiva asset color palette
+Hiva is floating above ground
+Home page skewed on wide screen monitors.
+
 Song
--Needs splash page.
 SFX
 -Wizard laugh
 --When within 3 squares.
@@ -59,8 +62,4 @@ SFX
 -Death
 -Steps
 
-Home page
--Video
--Merch
--Game
 Embed Map in console
