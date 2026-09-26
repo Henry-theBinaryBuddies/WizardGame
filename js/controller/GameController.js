@@ -1,3 +1,5 @@
+import AudioManager from "../audio/AudioManager.js";
+
 export class GameController {
 
   constructor(dungeon, player, wizard, pathfinder) {
@@ -122,6 +124,8 @@ export class GameController {
         break;
     }
 
+    AudioManager.play("step");
+
     this.resolveCurrentRoom();
 
     if (!this.gameOver) {
@@ -150,6 +154,7 @@ export class GameController {
   handleTrap(room) {
     if (room.triggerTrap()) {
       this.player.takeDamage(1);
+      AudioManager.play("trap");
     }
   }
 
@@ -157,11 +162,13 @@ export class GameController {
     if (!room.hasArtifact()) {
       return;
     }
+    AudioManager.play("artifact");
 
     const artifact =
       room.removeArtifact();
 
     this.player.collectArtifact(artifact);
+
   }
 
   handlePotion(room) {
@@ -171,9 +178,11 @@ export class GameController {
 
     this.player.collectPotion();
     room.hasPotion = false;
+    AudioManager.play("potionPickup");
   }
 
   usePotion() {
+    AudioManager.play("heal");
     return this.player.usePotion();
   }
 
@@ -216,6 +225,8 @@ export class GameController {
         this.dungeon.exitPosition.row,
         this.dungeon.exitPosition.col
       );
+
+      AudioManager.play("wizard");
 
       this.checkForLoss();
 

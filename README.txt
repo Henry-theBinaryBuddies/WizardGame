@@ -51,15 +51,10 @@ Fix Hiva asset color palette
 Hiva is floating above ground
 Home page skewed on wide screen monitors.
 
-Song
 SFX
 -Wizard laugh
 --When within 3 squares.
---When touched.
--Picking up item
--Picking up artifact
--Pain
 -Death
--Steps
+-Victory ("Great Job")
 
 Embed Map in console

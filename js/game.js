@@ -52,6 +52,23 @@ const populator =
 
 populator.populate();
 
+const backgroundMusic = document.getElementById("background-music");
+
+backgroundMusic.volume = 0.3;
+
+function startBackgroundMusic() {
+  backgroundMusic.play()
+    .then(() => {
+      document.removeEventListener("keydown", startBackgroundMusic);
+      document.removeEventListener("click", startBackgroundMusic);
+    })
+    .catch(error => {
+      console.log("Audio playback failed:", error);
+    });
+}
+
+document.addEventListener("keydown", startBackgroundMusic);
+document.addEventListener("click", startBackgroundMusic);
 
 // =========================================================
 // PLAYER
