@@ -184,8 +184,11 @@ export class GameController {
   }
 
   usePotion() {
-    AudioManager.play("heal");
-    return this.player.usePotion();
+    const used = this.player.usePotion();
+    if (used) {
+      AudioManager.play("heal");
+    }
+    return used;
   }
 
   moveWizard() {
@@ -228,9 +231,10 @@ export class GameController {
         this.dungeon.exitPosition.col
       );
 
-      AudioManager.play("wizard");
-
       this.checkForLoss();
+      if (this.player.isAlive()) {
+      AudioManager.play("wizard");
+     }
 
       return true;
     }

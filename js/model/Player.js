@@ -50,6 +50,10 @@ export class Player {
     this.artifacts.push(artifact);
   }
 
+  isAlive() {
+    return this.hp > 0;
+  }
+
   setPosition(row, col) {
     this.row = row;
     this.col = col;

@@ -48,8 +48,8 @@ Authors: ElizaWy, JaidynReiman, Stephen Challener (Redshrike), Johannes Sjölund
 
 TODO:
 Fix Hiva asset color palette
-Hiva is floating above ground
-Home page skewed on wide screen monitors.
-Fix controls
-
-Embed Map in console
+Home page skewed on wide-screen monitors. CHECK THIS.
+Potion button needs to be rethought. Perhaps clicking the potion graphic would be better.
+Embed Map and debugging console commands behind a debugger cheat code
+Steps sfx need to be louder.
+HIVA intro.

@@ -1155,7 +1155,7 @@ export class DungeonRenderer {
       rightZ * halfWidth;
 
 
-    const bottom = 0.02;
+    const bottom = 0;
     const top =
       bottom + height;
 
@@ -1742,13 +1742,7 @@ export class DungeonRenderer {
       +
       rightZ * halfWidth;
 
-
-    /*
-     * Lift slightly above the floor.
-     */
-
-    const bottom =
-      0.02;
+    const bottom = 0;
 
 
     const top =

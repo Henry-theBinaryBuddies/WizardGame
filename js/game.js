@@ -440,6 +440,7 @@ function updateGameUI() {
 // PLAYER CONTROLS
 // =========================================================
 
+//Turn Left Button
 document
   .getElementById(
     "turn-left"
@@ -454,7 +455,7 @@ document
     }
   );
 
-
+//Move Forward Button
 document
   .getElementById(
     "move-forward"
@@ -471,7 +472,7 @@ document
     }
   );
 
-
+//Turn Right Button
 document
   .getElementById(
     "turn-right"
@@ -486,7 +487,7 @@ document
     }
   );
 
-
+//Potion Button
 document
   .getElementById(
     "use-potion"
@@ -501,6 +502,64 @@ document
     }
   );
 
+// =========================================================
+// MOBILE SWIPE CONTROLS
+// =========================================================
+
+let touchStartX = 0;
+let touchStartY = 0;
+
+canvas.addEventListener(
+  "touchstart",
+  event => {
+    touchStartX =
+      event.changedTouches[0].clientX;
+
+    touchStartY =
+      event.changedTouches[0].clientY;
+  }
+);
+
+canvas.addEventListener(
+  "touchend",
+  event => {
+
+    const touchEndX =
+      event.changedTouches[0].clientX;
+
+    const touchEndY =
+      event.changedTouches[0].clientY;
+
+    const deltaX =
+      touchEndX - touchStartX;
+
+    const deltaY =
+      touchEndY - touchStartY;
+
+    const minimumSwipeDistance = 50;
+
+    if (
+      Math.abs(deltaX) < minimumSwipeDistance
+    ) {
+      return;
+    }
+
+    if (
+      Math.abs(deltaX) <= Math.abs(deltaY)
+    ) {
+      return;
+    }
+
+    if (deltaX < 0) {
+      controller.turnLeft();
+    }
+    else {
+      controller.turnRight();
+    }
+
+    updateGameUI();
+  }
+);
 
 // =========================================================
 // REPLAY BUTTONS
