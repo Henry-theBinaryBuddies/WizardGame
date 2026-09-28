@@ -50,11 +50,6 @@ TODO:
 Fix Hiva asset color palette
 Hiva is floating above ground
 Home page skewed on wide screen monitors.
-
-SFX
--Wizard laugh
---When within 3 squares.
--Death
--Victory ("Great Job")
+Fix controls
 
 Embed Map in console

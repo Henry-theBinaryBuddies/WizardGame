@@ -15,6 +15,7 @@ export class GameController {
   checkForLoss() {
     if (this.player.hp <= 0) {
       this.gameOver = true;
+      AudioManager.play("wizard2");
       console.log("LOSS TRIGGERED");
       return true;
     }
@@ -40,6 +41,7 @@ export class GameController {
       && this.player.artifacts.length === 3
     ) {
       this.gameWon = true;
+      AudioManager.play("victory");
       this.gameOver = true;
       return true;
     }

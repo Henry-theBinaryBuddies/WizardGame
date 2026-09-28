@@ -5,9 +5,9 @@ class AudioManager {
       heal: new Audio("./assets/sfx/heal.wav"),
       trap: new Audio("./assets/sfx/pit.wav"),
       wizard: new Audio("./assets/sfx/evil laugh.wav"),
-      step: new Audio("./assets/sfx/step.wav")
-      /*death: new Audio("./assets/sfx/death.wav"),
-      victory: new Audio("./assets/sfx/victory.wav") */
+      wizard2: new Audio("./assets/sfx/laugh 3.wav"),
+      step: new Audio("./assets/sfx/step.wav"),
+      victory: new Audio("./assets/sfx/great job.wav")
     };
 
   static volume = 0.7;
