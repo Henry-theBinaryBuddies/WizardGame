@@ -25,7 +25,7 @@ button {
   position: relative;
 
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
 
   overflow: hidden;
 }
@@ -49,10 +49,9 @@ body {
   left: 0;
   right: 0;
 
-  bottom: clamp(
-    8px,
-    3vw,
-    18px
+  bottom: max(
+    clamp(8px, 3vw, 18px),
+    env(safe-area-inset-bottom)
   );
 
   display: flex;
@@ -212,12 +211,7 @@ body {
 
 #death-overlay {
   position: fixed;
-
-  top: 0;
-  left: 0;
-
-  width: 100vw;
-  height: 100vh;
+  inset: 0;
 
   background-color: rgba(120, 0, 0, 0);
 
@@ -378,12 +372,7 @@ body {
 
 #win-overlay {
   position: fixed;
-
-  top: 0;
-  left: 0;
-
-  width: 100vw;
-  height: 100vh;
+  inset:0;
 
   background-color: rgba(10, 30, 20, 0);
 
@@ -611,10 +600,9 @@ body {
 #hud {
   position: absolute;
 
-  top: clamp(
-    8px,
-    3vw,
-    20px
+  top: max(
+    clamp(8px, 3vw, 20px),
+    env(safe-area-inset-top)
   );
 
   right: clamp(
