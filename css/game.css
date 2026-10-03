@@ -70,10 +70,33 @@ body {
   z-index: 500;
 }
 
+#center-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
 @media (orientation: portrait) and (pointer: coarse) {
 
   .turn-control {
     display: none;
+  }
+
+  #center-controls {
+    gap: 32px;
+  }
+
+  .forward-control {
+    width: 84px;
+    height: 84px;
+    font-size: 48px;
+  }
+
+  .potion-control {
+    width: 84px;
+    height: 60px;
+    font-size: 18px;
   }
 
 }
