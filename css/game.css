@@ -77,29 +77,6 @@ body {
   gap: 12px;
 }
 
-@media (orientation: portrait) and (pointer: coarse) {
-
-  .turn-control {
-    display: none;
-  }
-
-  #center-controls {
-    gap: 32px;
-  }
-
-  .forward-control {
-    width: 84px;
-    height: 84px;
-    font-size: 48px;
-  }
-
-  .potion-control {
-    width: 84px;
-    height: 60px;
-    font-size: 18px;
-  }
-
-}
 
 #movement-controls,
 #action-controls {
@@ -127,6 +104,9 @@ body {
     10vw,
     64px
   );
+
+  background: transparent;
+  border: none;
 
   color: white;
 
@@ -747,6 +727,36 @@ body {
   object-fit: contain;
 
   image-rendering: pixelated;
+}
+
+@media (orientation: portrait) and (pointer: coarse) {
+
+  .turn-control {
+    display: none;
+  }
+
+  #movement-controls {
+    align-items: center;
+  }
+
+  #center-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .forward-control {
+    width: 90px;
+    height: 90px;
+    font-size: 52px;
+  }
+
+  .potion-control {
+    width: 90px;
+    height: 64px;
+    font-size: 18px;
+  }
 }
 
 
