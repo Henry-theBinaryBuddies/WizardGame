@@ -41,7 +41,15 @@ export class DungeonRenderer {
 
       potion: "assets/images/potion.png",
       trap: "assets/images/trap.png",
-      exit: "assets/images/HIVA.png"
+      exit: "assets/images/HIVA.png",
+
+      POSTER_1: "assets/images/posters/poster1.png",
+      POSTER_2: "assets/images/posters/poster2.png",
+      POSTER_3: "assets/images/posters/poster3.png",
+      POSTER_4: "assets/images/posters/poster4.png",
+      POSTER_5: "assets/images/posters/poster5.png",
+      POSTER_6: "assets/images/posters/poster6.png",
+      POSTER_7: "assets/images/posters/poster7.png"
     };
 
 
@@ -98,7 +106,7 @@ export class DungeonRenderer {
     this.trapTexture = null;
     this.exitTexture = null;
 
-    // =========================================================
+// =========================================================
 // CAMERA ANIMATION
 // =========================================================
 
@@ -1296,6 +1304,43 @@ export class DungeonRenderer {
         this.texturePaths.exit,
         false
       );
+
+    this.posterTextures = {
+      POSTER_1: this.loadTexture(
+        this.texturePaths.POSTER_1,
+        false
+      ),
+
+      POSTER_2: this.loadTexture(
+        this.texturePaths.POSTER_2,
+        false
+      ),
+
+      POSTER_3: this.loadTexture(
+        this.texturePaths.POSTER_3,
+        false
+      ),
+
+      POSTER_4: this.loadTexture(
+        this.texturePaths.POSTER_4,
+        false
+      ),
+
+      POSTER_5: this.loadTexture(
+        this.texturePaths.POSTER_5,
+        false
+      ),
+
+      POSTER_6: this.loadTexture(
+        this.texturePaths.POSTER_6,
+        false
+      ),
+
+      POSTER_7: this.loadTexture(
+        this.texturePaths.POSTER_7,
+        false
+      )
+    };
   }
 
 
@@ -1613,6 +1658,22 @@ export class DungeonRenderer {
             col
           );
 
+        // Poster
+        if (room.poster !== null) {
+
+          const texture =
+            this.posterTextures[
+              room.poster.type
+              ];
+
+          this.drawWallPoster(
+            row,
+            col,
+            room.poster.wall,
+            texture
+          );
+        }
+
 
         // Artifacts
         if (
@@ -1663,6 +1724,202 @@ export class DungeonRenderer {
         }
       }
     }
+  }
+
+  // =========================================================
+// WALL POSTER
+// =========================================================
+
+  drawWallPoster(
+    row,
+    col,
+    wall,
+    texture
+  ) {
+
+    if (!texture) {
+      return;
+    }
+
+    const width = 0.55;
+    const height = 0.65;
+
+    const halfWidth =
+      width / 2;
+
+    const centerY = 0.52;
+
+    const bottom =
+      centerY - height / 2;
+
+    const top =
+      centerY + height / 2;
+
+    // Prevent z-fighting with wall.
+    const offset = 0.005;
+
+    const centerX =
+      col + 0.5;
+
+    const centerZ =
+      row + 0.5;
+
+    const vertices = [];
+
+    switch (wall) {
+
+      case "NORTH": {
+
+        const z =
+          row + offset;
+
+        this.addQuad(
+          vertices,
+
+          [
+            centerX - halfWidth,
+            bottom,
+            z
+          ],
+
+          [
+            centerX + halfWidth,
+            bottom,
+            z
+          ],
+
+          [
+            centerX + halfWidth,
+            top,
+            z
+          ],
+
+          [
+            centerX - halfWidth,
+            top,
+            z
+          ]
+        );
+
+        break;
+      }
+
+      case "SOUTH": {
+
+        const z =
+          row + 1 - offset;
+
+        this.addQuad(
+          vertices,
+
+          [
+            centerX + halfWidth,
+            bottom,
+            z
+          ],
+
+          [
+            centerX - halfWidth,
+            bottom,
+            z
+          ],
+
+          [
+            centerX - halfWidth,
+            top,
+            z
+          ],
+
+          [
+            centerX + halfWidth,
+            top,
+            z
+          ]
+        );
+
+        break;
+      }
+
+      case "WEST": {
+
+        const x =
+          col + offset;
+
+        this.addQuad(
+          vertices,
+
+          [
+            x,
+            bottom,
+            centerZ + halfWidth
+          ],
+
+          [
+            x,
+            bottom,
+            centerZ - halfWidth
+          ],
+
+          [
+            x,
+            top,
+            centerZ - halfWidth
+          ],
+
+          [
+            x,
+            top,
+            centerZ + halfWidth
+          ]
+        );
+
+        break;
+      }
+
+      case "EAST": {
+
+        const x =
+          col + 1 - offset;
+
+        this.addQuad(
+          vertices,
+
+          [
+            x,
+            bottom,
+            centerZ - halfWidth
+          ],
+
+          [
+            x,
+            bottom,
+            centerZ + halfWidth
+          ],
+
+          [
+            x,
+            top,
+            centerZ + halfWidth
+          ],
+
+          [
+            x,
+            top,
+            centerZ - halfWidth
+          ]
+        );
+
+        break;
+      }
+
+      default:
+        return;
+    }
+
+    this.uploadDynamicSprite(
+      vertices,
+      texture
+    );
   }
 
 

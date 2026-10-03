@@ -14,6 +14,8 @@ export class Room {
     this.artifact = null;
     this.hasPotion = false;
     this.isExit = false;
+
+    this.poster = null;
   }
 
   openNorthDoor() {

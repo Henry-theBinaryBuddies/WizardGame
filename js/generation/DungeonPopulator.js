@@ -10,6 +10,7 @@ export class DungeonPopulator {
     this.placeArtifacts();
     this.placeTraps(5);
     this.placePotions(5);
+    this.placePosters();
   }
 
   placeExit() {
@@ -62,6 +63,35 @@ export class DungeonPopulator {
     this.dungeon.setPlayerStart(0, 0);
   }
 
+  placePosters() {
+    const posters = [
+      "POSTER_1",
+      "POSTER_2",
+      "POSTER_3",
+      "POSTER_4",
+      "POSTER_5",
+      "POSTER_6",
+      "POSTER_7"
+    ];
+
+    for (const poster of posters) {
+
+      const placement =
+        this.getRandomPosterPlacement();
+
+      const room =
+        this.dungeon.getRoom(
+          placement.row,
+          placement.col
+        );
+
+      room.poster = {
+        type: poster,
+        wall: placement.wall
+      };
+    }
+  }
+
   getRandomAvailablePosition() {
     let row;
     let col;
@@ -82,6 +112,59 @@ export class DungeonPopulator {
     } while (!this.isAvailable(room, row, col));
 
     return { row, col };
+  }
+
+  getRandomPosterPlacement() {
+    while (true) {
+
+      const row =
+        Math.floor(
+          Math.random() * this.dungeon.rows
+        );
+
+      const col =
+        Math.floor(
+          Math.random() * this.dungeon.cols
+        );
+
+      const room =
+        this.dungeon.getRoom(row, col);
+
+      if (room.poster !== null) {
+        continue;
+      }
+
+      const availableWalls = [];
+
+      if (!room.northDoor) {
+        availableWalls.push("NORTH");
+      }
+
+      if (!room.southDoor) {
+        availableWalls.push("SOUTH");
+      }
+
+      if (!room.eastDoor) {
+        availableWalls.push("EAST");
+      }
+
+      if (!room.westDoor) {
+        availableWalls.push("WEST");
+      }
+
+      if (availableWalls.length === 0) {
+        continue;
+      }
+
+      const wall =
+        availableWalls[
+          Math.floor(
+            Math.random() * availableWalls.length
+          )
+          ];
+
+      return { row, col, wall };
+    }
   }
 
   isAvailable(room, row, col) {
