@@ -1,4 +1,17 @@
-Credits & Attribution
+Credits & Attribution:
+Website and game developed by:
+Henry Lee Rudolph Jr. of theBinaryBuddies LLC
+
+Film:
+"Tunnel Run" by London Homer-Wambeam
+Hadron Industries Entertainment, LLC
+
+Starring:
+Henry Lee Rudolph Jr.
+Jenna Rae Rudolph
+Thomas Samuel Revas Jr.
+
+Sprites:
 body/bodies/female/idle.png
 see details at https://opengameart.org/content/lpc-character-bases
 
@@ -45,9 +58,3 @@ original by wulax, edited for v3 base by bluecarrot16, Jump/Sit/Emote/Run/Revise
 Licenses: OGA-BY 3.0, CC-BY-SA 3.0, GPL 3.0
 
 Authors: JaidynReiman, bluecarrot16, Johannes Sjölund (wulax)
-
-TODO:
-Potion button needs to be rethought. Perhaps clicking the potion graphic would be better.
-Embed Map and debugging console commands behind a debugger cheat code
-Steps sfx need to be louder.
-HIVA intro.
