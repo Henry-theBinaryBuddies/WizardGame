@@ -383,8 +383,8 @@ function updateHealthHUD() {
 
     heart.src =
       i < player.hp
-        ? "assets/images/heart.png"
-        : "assets/images/heart_empty.png";
+        ? "assets/images/heart.webp"
+        : "assets/images/heart_empty.webp";
 
 
     healthDisplay.appendChild(

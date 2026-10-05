@@ -12,13 +12,13 @@ export class TextureManager {
       ceiling: "assets/images/ceiling_texture.webp",
       wizard: "assets/images/wizard.png",
 
-      cookies: "assets/images/cookies.png",
-      flower: "assets/images/flower.png",
-      green_potion: "assets/images/green_potion.png",
+      cookies: "assets/images/cookies.webp",
+      flower: "assets/images/flower.webp",
+      green_potion: "assets/images/green_potion.webp",
 
-      potion: "assets/images/potion.png",
-      trap: "assets/images/trap.png",
-      exit: "assets/images/HIVA.png",
+      potion: "assets/images/potion.webp",
+      trap: "assets/images/trap.webp",
+      exit: "assets/images/HIVA.webp",
 
       POSTER_1: "assets/images/posters/poster1.webp",
       POSTER_2: "assets/images/posters/poster2.webp",
