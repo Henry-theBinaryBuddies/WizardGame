@@ -10,7 +10,7 @@ export class TextureManager {
       wall: "assets/images/wall_texture.webp",
       floor: "assets/images/floor_texture.webp",
       ceiling: "assets/images/ceiling_texture.webp",
-      wizard: "assets/images/wizard.png",
+      wizard: "assets/images/wizard.webp",
 
       cookies: "assets/images/cookies.webp",
       flower: "assets/images/flower.webp",
