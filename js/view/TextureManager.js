@@ -7,9 +7,9 @@ export class TextureManager {
     // TEXTURE PATHS
     // =========================================================
     this.texturePaths = {
-      wall: "assets/images/wall_texture.png",
-      floor: "assets/images/floor_texture.png",
-      ceiling: "assets/images/ceiling_texture.png",
+      wall: "assets/images/wall_texture.webp",
+      floor: "assets/images/floor_texture.webp",
+      ceiling: "assets/images/ceiling_texture.webp",
       wizard: "assets/images/wizard.png",
 
       cookies: "assets/images/cookies.png",
@@ -20,20 +20,20 @@ export class TextureManager {
       trap: "assets/images/trap.png",
       exit: "assets/images/HIVA.png",
 
-      POSTER_1: "assets/images/posters/poster1.png",
-      POSTER_2: "assets/images/posters/poster2.png",
-      POSTER_3: "assets/images/posters/poster3.png",
-      POSTER_4: "assets/images/posters/poster4.png",
-      POSTER_5: "assets/images/posters/poster5.png",
-      POSTER_6: "assets/images/posters/poster6.png",
-      POSTER_7: "assets/images/posters/poster7.png",
+      POSTER_1: "assets/images/posters/poster1.webp",
+      POSTER_2: "assets/images/posters/poster2.webp",
+      POSTER_3: "assets/images/posters/poster3.webp",
+      POSTER_4: "assets/images/posters/poster4.webp",
+      POSTER_5: "assets/images/posters/poster5.webp",
+      POSTER_6: "assets/images/posters/poster6.webp",
+      POSTER_7: "assets/images/posters/poster7.webp",
 
-      GRAFFITI_1: "assets/images/graffiti/graffiti1.png",
-      GRAFFITI_2: "assets/images/graffiti/graffiti2.png",
-      GRAFFITI_3: "assets/images/graffiti/graffiti3.png",
-      GRAFFITI_4: "assets/images/graffiti/graffiti4.png",
-      GRAFFITI_5: "assets/images/graffiti/graffiti5.png",
-      GRAFFITI_6: "assets/images/graffiti/graffiti6.png"
+      GRAFFITI_1: "assets/images/graffiti/graffiti1.webp",
+      GRAFFITI_2: "assets/images/graffiti/graffiti2.webp",
+      GRAFFITI_3: "assets/images/graffiti/graffiti3.webp",
+      GRAFFITI_4: "assets/images/graffiti/graffiti4.webp",
+      GRAFFITI_5: "assets/images/graffiti/graffiti5.webp",
+      GRAFFITI_6: "assets/images/graffiti/graffiti6.webp"
     };
 
     this.textures = {};
