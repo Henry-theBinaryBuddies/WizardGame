@@ -70,11 +70,12 @@ body {
   text-decoration: none;
   color: #cc6011;
   filter: drop-shadow(0 0 5px #178120);
-  font-size: clamp(48px, 8vmin, 110px);
+
+  font-size: clamp(24px, 8vmin, 110px);
+
   border: none;
   outline: none;
   transition: filter 0.3s ease-in-out;
-
 }
 .buttons button:hover {
   filter: drop-shadow(0 0 10px #ab2307)
@@ -661,5 +662,17 @@ body {
 to {
 	transform: translate3d(-100%, 0, 0)
 }
+}
+
+@media (max-width: 600px) {
+
+  .buttons {
+    gap: 2%;
+    padding: 2%;
+  }
+
+  .buttons button {
+    font-size: clamp(20px, 7vw, 36px);
+  }
 }
 

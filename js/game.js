@@ -449,6 +449,10 @@ document
     "click",
     () => {
 
+      if (introActive) {
+        return;
+      }
+
       controller.turnLeft();
 
       updateGameUI();
@@ -463,6 +467,10 @@ document
   .addEventListener(
     "click",
     () => {
+
+      if (introActive) {
+        return;
+      }
 
       handlePlayerAction(
         () => {
@@ -481,6 +489,10 @@ document
     "click",
     () => {
 
+      if (introActive) {
+        return;
+      }
+
       controller.turnRight();
 
       updateGameUI();
@@ -495,6 +507,10 @@ document
   .addEventListener(
     "click",
     () => {
+
+      if (introActive) {
+        return;
+      }
 
       controller.usePotion();
 
@@ -551,9 +567,15 @@ canvas.addEventListener(
     }
 
     if (deltaX < 0) {
+      if (introActive) {
+        return;
+      }
       controller.turnLeft();
     }
     else {
+      if (introActive) {
+        return;
+      }
       controller.turnRight();
     }
 
@@ -580,6 +602,75 @@ playAgainButton.addEventListener(
 winPlayAgainButton.addEventListener(
   "click",
   restartGame
+);
+
+
+// =========================================================
+// INTRO OVERLAY
+// =========================================================
+
+const introOverlay =
+  document.getElementById("intro-overlay");
+
+const introText =
+  document.getElementById("intro-text");
+
+const introOk =
+  document.getElementById("intro-ok");
+
+let introActive = true;
+
+let introMessage =
+  "Welcome to your first day with Hadron Industries! " +
+  "To complete your first delivery find the flowers, green potion, and cookies " +
+  "then find me before the evil Wizard Rubicon finds you! " +
+  "Beware the traps he's laid that will harm you, " +
+  "but I've placed potions to restore your health.";
+
+if (
+  window.matchMedia(
+    "(orientation: portrait)"
+  ).matches
+) {
+  introMessage +=
+    " Swipe left or right to turn in the dungeon.";
+}
+
+function typeIntroText(
+  text,
+  index = 0
+) {
+
+  if (index >= text.length) {
+    introOk.classList.add("visible");
+    return;
+  }
+
+  introText.textContent +=
+    text[index];
+
+  setTimeout(
+    () => {
+      typeIntroText(
+        text,
+        index + 1
+      );
+    },
+    30
+  );
+}
+
+typeIntroText(introMessage);
+
+
+introOk.addEventListener(
+  "click",
+  () => {
+
+    introActive = false;
+
+    introOverlay.remove();
+  }
 );
 
 
