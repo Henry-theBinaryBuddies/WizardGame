@@ -110,7 +110,7 @@ body {
 
   color: white;
 
-  font-size: 32px;
+  font-size: 64px;
 
   cursor: pointer;
 
@@ -136,7 +136,7 @@ body {
   );
 
   font-size: clamp(
-    11px,
+    20px,
     2.5vw,
     14px
   );
@@ -787,25 +787,38 @@ body {
     0 0 0 2px black;
 }
 
+#intro-dialog {
+  width: 100%;
+}
+
 #intro-hiva {
-  width: clamp(90px, 15vw, 150px);
-  height: auto;
+  width: clamp(110px, 18vw, 180px);
+  aspect-ratio: 1 / 1;
+
+  flex-shrink: 0;
+
+  background-image:
+    url("../assets/images/intro.png");
+
+  background-size: 200% 100%;
+  background-position: left center;
+  background-repeat: no-repeat;
 
   image-rendering: pixelated;
 }
 
+#intro-hiva.talking {
+  background-position: right center;
+}
 #intro-content {
   flex: 1;
-
   min-height: 140px;
-
   display: flex;
   flex-direction: column;
 }
 
 #intro-name {
   margin-bottom: 10px;
-
   font-size: clamp(20px, 4vw, 30px);
   color: #ffe66d;
 }
@@ -1077,7 +1090,6 @@ body {
   text-align: left;
 }
 
-
 #leaderboard-list li {
   padding: 3px 0;
 }
@@ -1124,10 +1136,12 @@ body {
 
   #intro-dialog {
     width: 100%;
+    align-items: flex-end;
   }
 
   #intro-hiva {
-    width: 51px;
+    width: clamp(90px, 28vw, 140px);
+    align-self: flex-end;
   }
 
   #intro-text {

@@ -771,12 +771,16 @@ const introText =
 const introOk =
   document.getElementById("intro-ok");
 
+const introHiva =
+  document.getElementById(
+    "intro-hiva"
+  );
+
 let introMessage =
-  "Welcome to your first day with Hadron Industries! " +
-  "To complete your first delivery find the flowers, green potion, and cookies " +
-  "then find me before the evil Wizard Rubicon finds you! " +
-  "Beware the traps he's laid that will harm you, " +
-  "but I've placed potions to restore your health.";
+  "Welcome to Hadron Industries! \n" +
+  "Find the flowers, green potion, and cookies, " +
+  "then bring them to me before Wizard Rubicon finds you! " +
+  "Watch for traps, and use potions to restore your health!";
 
 if (
   window.matchMedia(
@@ -786,6 +790,11 @@ if (
   introMessage +=
     " Swipe left or right to turn in the dungeon.";
 }
+const HIVA_TALK_SPEED = 200;
+
+let lastHivaMouthChange = 0;
+let hivaMouthOpen = false;
+
 
 function typeIntroText(
   text,
@@ -793,12 +802,45 @@ function typeIntroText(
 ) {
 
   if (index >= text.length) {
-    introOk.classList.add("visible");
+
+    introHiva.classList.remove(
+      "talking"
+    );
+
+    introOk.classList.add(
+      "visible"
+    );
+
     return;
   }
 
+
   introText.textContent +=
     text[index];
+
+
+  const now =
+    performance.now();
+
+
+  if (
+    now - lastHivaMouthChange
+    >=
+    HIVA_TALK_SPEED
+  ) {
+
+    hivaMouthOpen =
+      !hivaMouthOpen;
+
+    introHiva.classList.toggle(
+      "talking",
+      hivaMouthOpen
+    );
+
+    lastHivaMouthChange =
+      now;
+  }
+
 
   setTimeout(
     () => {

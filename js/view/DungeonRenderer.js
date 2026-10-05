@@ -1,3 +1,35 @@
+import {
+  GraffitiGenerator
+} from "../generation/GraffitiGenerator.js";
+
+import {
+  TextureManager
+} from "./TextureManager.js";
+
+import {
+  Camera
+} from "./Camera.js";
+
+import {
+  MatrixMath
+} from "./webgl/MatrixMath.js";
+
+import {
+  GeometryBuilder
+} from "./webgl/GeometryBuilder.js";
+
+import {
+  DungeonGeometryBuilder
+} from "./webgl/DungeonGeometryBuilder.js";
+
+import {
+  SpriteRenderer
+} from "./webgl/SpriteRenderer.js";
+
+import {
+  WebGLProgram
+} from "./webgl/WebGLProgram.js";
+
 export class DungeonRenderer {
 
   constructor(canvas, dungeon, player, wizard) {
@@ -11,9 +43,6 @@ export class DungeonRenderer {
     this.exitAnimationLastTime = 0;
     this.exitAnimationSpeed = 400;
 
-    this.posterTextures = {}
-
-    this.graffitiTextures = {};
     this.graffitiPlacements = [];
 
     // =========================================================
@@ -30,53 +59,19 @@ export class DungeonRenderer {
     }
 
 
-    // =========================================================
-    // TEXTURE PATHS
-    // =========================================================
-
-    this.texturePaths = {
-      wall: "assets/images/wall_texture.png",
-      floor: "assets/images/floor_texture.png",
-      ceiling: "assets/images/ceiling_texture.png",
-      wizard: "assets/images/wizard.png",
-
-      cookies: "assets/images/cookies.png",
-      flower: "assets/images/flower.png",
-      green_potion: "assets/images/green_potion.png",
-
-      potion: "assets/images/potion.png",
-      trap: "assets/images/trap.png",
-      exit: "assets/images/HIVA.png",
-
-      POSTER_1: "assets/images/posters/poster1.png",
-      POSTER_2: "assets/images/posters/poster2.png",
-      POSTER_3: "assets/images/posters/poster3.png",
-      POSTER_4: "assets/images/posters/poster4.png",
-      POSTER_5: "assets/images/posters/poster5.png",
-      POSTER_6: "assets/images/posters/poster6.png",
-      POSTER_7: "assets/images/posters/poster7.png",
-
-      GRAFFITI_1: "assets/images/graffiti/graffiti1.png",
-      GRAFFITI_2: "assets/images/graffiti/graffiti2.png",
-      GRAFFITI_3: "assets/images/graffiti/graffiti3.png",
-      GRAFFITI_4: "assets/images/graffiti/graffiti4.png",
-      GRAFFITI_5: "assets/images/graffiti/graffiti5.png",
-      GRAFFITI_6: "assets/images/graffiti/graffiti6.png"
-    };
-
+    this.textureManager =
+      new TextureManager(
+        this.gl
+      );
 
     // =========================================================
-    // SHADER STATE
+    // WEBGL PROGRAM
     // =========================================================
 
-    this.program = null;
-
-    this.positionLocation = null;
-    this.textureLocation = null;
-
-    this.projectionLocation = null;
-    this.viewLocation = null;
-    this.samplerLocation = null;
+    this.webGLProgram =
+      new WebGLProgram(
+        this.gl
+      );
 
 
     // =========================================================
@@ -95,55 +90,13 @@ export class DungeonRenderer {
     // =========================================================
     // DYNAMIC SPRITE BUFFER
     // =========================================================
-
     this.spriteBuffer =
       this.gl.createBuffer();
 
-
-    // =========================================================
-    // TEXTURES
-    // =========================================================
-
-    this.wallTexture = null;
-    this.floorTexture = null;
-    this.ceilingTexture = null;
-
-    this.wizardTexture = null;
-
-    this.flowerTexture = null;
-    this.greenPotionTexture = null;
-    this.cookiesTexture = null;
-
-    this.potionTexture = null;
-    this.trapTexture = null;
-    this.exitTexture = null;
-
-// =========================================================
-// CAMERA ANIMATION
-// =========================================================
-
-    this.cameraX =
-      this.player.col + 0.5;
-
-    this.cameraZ =
-      this.player.row + 0.5;
-
-    this.cameraAngle =
-      this.directionToAngle(
-        this.player.direction
+    this.camera =
+      new Camera(
+        this.player
       );
-
-    this.targetCameraX =
-      this.cameraX;
-
-    this.targetCameraZ =
-      this.cameraZ;
-
-    this.targetCameraAngle =
-      this.cameraAngle;
-
-    this.cameraMoveSpeed = 0.012;
-    this.cameraTurnSpeed = 0.012;
 
     this.lastFrameTime = null;
 
@@ -161,19 +114,21 @@ export class DungeonRenderer {
   initialize() {
     this.initializeWebGL();
 
-    this.program =
-      this.createShaderProgram();
-
-    this.getShaderLocations();
+    this.webGLProgram.initialize();
 
     this.createBuffers();
 
     this.buildDungeonGeometry();
 
-    this.generateGraffiti();
+    const graffitiGenerator =
+      new GraffitiGenerator(
+        this.dungeon
+      );
 
+    this.graffitiPlacements =
+      graffitiGenerator.generate();
 
-    this.loadTextures();
+    this.textureManager.loadAll();
   }
 
 
@@ -204,270 +159,6 @@ export class DungeonRenderer {
     );
   }
 
-
-  // =========================================================
-  // SHADERS
-  // =========================================================
-
-  createShaderProgram() {
-    const gl = this.gl;
-
-    const vertexShaderSource = `
-  attribute vec3 a_position;
-  attribute vec2 a_texCoord;
-
-  uniform mat4 u_projection;
-  uniform mat4 u_view;
-
-  varying vec2 v_texCoord;
-  varying vec3 v_viewPosition;
-
-  void main() {
-
-    vec4 viewPosition =
-      u_view
-      * vec4(
-          a_position,
-          1.0
-        );
-
-    gl_Position =
-      u_projection
-      * viewPosition;
-
-    v_texCoord =
-      a_texCoord;
-
-    v_viewPosition =
-      viewPosition.xyz;
-  }
-`;
-
-
-    const fragmentShaderSource = `
-  precision mediump float;
-
-  uniform sampler2D u_texture;
-
-  uniform float u_fogStart;
-  uniform float u_fogEnd;
-  uniform vec3 u_fogColor;
-
-  varying vec2 v_texCoord;
-  varying vec3 v_viewPosition;
-
-  void main() {
-
-    vec4 color =
-      texture2D(
-        u_texture,
-        v_texCoord
-      );
-
-
-    // Ignore transparent sprite pixels.
-    if (color.a < 0.1) {
-      discard;
-    }
-
-
-    float distanceFromCamera =
-      length(
-        v_viewPosition
-      );
-
-
-    float fogAmount =
-      smoothstep(
-        u_fogStart,
-        u_fogEnd,
-        distanceFromCamera
-      );
-
-
-    // Objects become darker as they recede.
-    float brightness =
-      mix(
-        1.0,
-        0.40,
-        fogAmount
-      );
-
-
-    vec3 darkenedColor =
-      color.rgb
-      * brightness;
-
-
-    // Blend distant objects toward the dungeon fog color.
-    vec3 finalColor =
-      mix(
-        darkenedColor,
-        u_fogColor,
-        fogAmount * 0.80
-      );
-
-
-    gl_FragColor =
-      vec4(
-        finalColor,
-        color.a
-      );
-  }
-`;
-
-
-    const vertexShader =
-      this.compileShader(
-        gl.VERTEX_SHADER,
-        vertexShaderSource
-      );
-
-
-    const fragmentShader =
-      this.compileShader(
-        gl.FRAGMENT_SHADER,
-        fragmentShaderSource
-      );
-
-
-    const program =
-      gl.createProgram();
-
-
-    gl.attachShader(
-      program,
-      vertexShader
-    );
-
-
-    gl.attachShader(
-      program,
-      fragmentShader
-    );
-
-
-    gl.linkProgram(
-      program
-    );
-
-
-    if (
-      !gl.getProgramParameter(
-        program,
-        gl.LINK_STATUS
-      )
-    ) {
-      throw new Error(
-        "Could not link WebGL program: "
-        + gl.getProgramInfoLog(
-          program
-        )
-      );
-    }
-
-
-    return program;
-  }
-
-
-  compileShader(type, source) {
-    const gl = this.gl;
-
-    const shader =
-      gl.createShader(type);
-
-
-    gl.shaderSource(
-      shader,
-      source
-    );
-
-
-    gl.compileShader(
-      shader
-    );
-
-
-    if (
-      !gl.getShaderParameter(
-        shader,
-        gl.COMPILE_STATUS
-      )
-    ) {
-      throw new Error(
-        "Could not compile WebGL shader: "
-        + gl.getShaderInfoLog(
-          shader
-        )
-      );
-    }
-
-
-    return shader;
-  }
-
-
-  getShaderLocations() {
-    const gl = this.gl;
-
-
-    this.positionLocation =
-      gl.getAttribLocation(
-        this.program,
-        "a_position"
-      );
-
-
-    this.textureLocation =
-      gl.getAttribLocation(
-        this.program,
-        "a_texCoord"
-      );
-
-
-    this.projectionLocation =
-      gl.getUniformLocation(
-        this.program,
-        "u_projection"
-      );
-
-
-    this.viewLocation =
-      gl.getUniformLocation(
-        this.program,
-        "u_view"
-      );
-
-
-    this.samplerLocation =
-      gl.getUniformLocation(
-        this.program,
-        "u_texture"
-      );
-
-    this.fogStartLocation =
-      gl.getUniformLocation(
-        this.program,
-        "u_fogStart"
-      );
-
-
-    this.fogEndLocation =
-      gl.getUniformLocation(
-        this.program,
-        "u_fogEnd"
-      );
-
-
-    this.fogColorLocation =
-      gl.getUniformLocation(
-        this.program,
-        "u_fogColor"
-      );
-  }
-
-
   // =========================================================
   // BUFFERS
   // =========================================================
@@ -486,6 +177,14 @@ export class DungeonRenderer {
 
     this.ceilingBuffer =
       gl.createBuffer();
+
+    this.spriteRenderer =
+      new SpriteRenderer(
+        this.gl,
+        this.spriteBuffer,
+        this.webGLProgram.drawBuffer.bind(this.webGLProgram),
+        this.getForwardVector.bind(this)
+      );
   }
 
 
@@ -494,1015 +193,43 @@ export class DungeonRenderer {
   // =========================================================
 
   buildDungeonGeometry() {
-    const wallVertices = [];
-    const floorVertices = [];
-    const ceilingVertices = [];
+
+    const geometryBuilder =
+      new DungeonGeometryBuilder(
+        this.dungeon
+      );
 
 
-    for (
-      let row = 0;
-      row < this.dungeon.rows;
-      row++
-    ) {
-
-      for (
-        let col = 0;
-        col < this.dungeon.cols;
-        col++
-      ) {
-
-        const room =
-          this.dungeon.getRoom(
-            row,
-            col
-          );
+    const geometry =
+      geometryBuilder.build();
 
 
-        // -----------------------------------------------------
-        // FLOOR
-        // -----------------------------------------------------
-
-        this.addFloor(
-          floorVertices,
-          row,
-          col
-        );
-
-
-        // -----------------------------------------------------
-        // CEILING
-        // -----------------------------------------------------
-
-        this.addCeiling(
-          ceilingVertices,
-          row,
-          col
-        );
-
-
-        /*
-         * NORTH and WEST walls are generated
-         * for every room.
-         *
-         * SOUTH and EAST walls are only needed
-         * on the dungeon outer boundary.
-         */
-
-
-        // -----------------------------------------------------
-        // NORTH WALL
-        // -----------------------------------------------------
-
-        if (!room.northDoor) {
-
-          this.addNorthWall(
-            wallVertices,
-            row,
-            col
-          );
-        }
-
-
-        // -----------------------------------------------------
-        // WEST WALL
-        // -----------------------------------------------------
-
-        if (!room.westDoor) {
-
-          this.addWestWall(
-            wallVertices,
-            row,
-            col
-          );
-        }
-
-
-        // -----------------------------------------------------
-        // SOUTH OUTER WALL
-        // -----------------------------------------------------
-
-        if (
-          row ===
-          this.dungeon.rows - 1
-          &&
-          !room.southDoor
-        ) {
-
-          this.addSouthWall(
-            wallVertices,
-            row,
-            col
-          );
-        }
-
-
-        // -----------------------------------------------------
-        // EAST OUTER WALL
-        // -----------------------------------------------------
-
-        if (
-          col ===
-          this.dungeon.cols - 1
-          &&
-          !room.eastDoor
-        ) {
-
-          this.addEastWall(
-            wallVertices,
-            row,
-            col
-          );
-        }
-      }
-    }
-
-
-    this.uploadStaticBuffer(
+    this.webGLProgram.uploadStaticBuffer(
       this.wallBuffer,
-      wallVertices
+      geometry.walls
     );
 
 
-    this.uploadStaticBuffer(
+    this.webGLProgram.uploadStaticBuffer(
       this.floorBuffer,
-      floorVertices
+      geometry.floors
     );
 
 
-    this.uploadStaticBuffer(
+    this.webGLProgram.uploadStaticBuffer(
       this.ceilingBuffer,
-      ceilingVertices
+      geometry.ceilings
     );
-
-
-    /*
-     * Each vertex stores:
-     *
-     * x
-     * y
-     * z
-     * u
-     * v
-     */
 
     this.wallVertexCount =
-      wallVertices.length / 5;
-
+      geometry.walls.length / 5;
 
     this.floorVertexCount =
-      floorVertices.length / 5;
-
+      geometry.floors.length / 5;
 
     this.ceilingVertexCount =
-      ceilingVertices.length / 5;
+      geometry.ceilings.length / 5;
   }
-
-
-  uploadStaticBuffer(
-    buffer,
-    vertices
-  ) {
-    const gl = this.gl;
-
-
-    gl.bindBuffer(
-      gl.ARRAY_BUFFER,
-      buffer
-    );
-
-
-    gl.bufferData(
-      gl.ARRAY_BUFFER,
-      new Float32Array(
-        vertices
-      ),
-      gl.STATIC_DRAW
-    );
-  }
-
-
-  // =========================================================
-  // FLOOR
-  // =========================================================
-
-  addFloor(
-    vertices,
-    row,
-    col
-  ) {
-
-    const x1 = col;
-    const x2 = col + 1;
-
-    const z1 = row;
-    const z2 = row + 1;
-
-    const y = 0;
-
-
-    this.addQuad(
-      vertices,
-
-      [
-        x1,
-        y,
-        z1
-      ],
-
-      [
-        x2,
-        y,
-        z1
-      ],
-
-      [
-        x2,
-        y,
-        z2
-      ],
-
-      [
-        x1,
-        y,
-        z2
-      ]
-    );
-  }
-
-
-  // =========================================================
-  // CEILING
-  // =========================================================
-
-  addCeiling(
-    vertices,
-    row,
-    col
-  ) {
-
-    const x1 = col;
-    const x2 = col + 1;
-
-    const z1 = row;
-    const z2 = row + 1;
-
-    const y = 1;
-
-
-    this.addQuad(
-      vertices,
-
-      [
-        x1,
-        y,
-        z2
-      ],
-
-      [
-        x2,
-        y,
-        z2
-      ],
-
-      [
-        x2,
-        y,
-        z1
-      ],
-
-      [
-        x1,
-        y,
-        z1
-      ]
-    );
-  }
-
-
-  // =========================================================
-  // NORTH WALL
-  // =========================================================
-
-  addNorthWall(
-    vertices,
-    row,
-    col
-  ) {
-
-    const x1 = col;
-    const x2 = col + 1;
-
-    const z = row;
-
-
-    this.addQuad(
-      vertices,
-
-      [
-        x1,
-        0,
-        z
-      ],
-
-      [
-        x2,
-        0,
-        z
-      ],
-
-      [
-        x2,
-        1,
-        z
-      ],
-
-      [
-        x1,
-        1,
-        z
-      ]
-    );
-  }
-
-
-  // =========================================================
-  // SOUTH WALL
-  // =========================================================
-
-  addSouthWall(
-    vertices,
-    row,
-    col
-  ) {
-
-    const x1 = col;
-    const x2 = col + 1;
-
-    const z =
-      row + 1;
-
-
-    this.addQuad(
-      vertices,
-
-      [
-        x2,
-        0,
-        z
-      ],
-
-      [
-        x1,
-        0,
-        z
-      ],
-
-      [
-        x1,
-        1,
-        z
-      ],
-
-      [
-        x2,
-        1,
-        z
-      ]
-    );
-  }
-
-
-  // =========================================================
-  // WEST WALL
-  // =========================================================
-
-  addWestWall(
-    vertices,
-    row,
-    col
-  ) {
-
-    const x = col;
-
-    const z1 = row;
-    const z2 = row + 1;
-
-
-    this.addQuad(
-      vertices,
-
-      [
-        x,
-        0,
-        z2
-      ],
-
-      [
-        x,
-        0,
-        z1
-      ],
-
-      [
-        x,
-        1,
-        z1
-      ],
-
-      [
-        x,
-        1,
-        z2
-      ]
-    );
-  }
-
-
-  // =========================================================
-  // EAST WALL
-  // =========================================================
-
-  addEastWall(
-    vertices,
-    row,
-    col
-  ) {
-
-    const x =
-      col + 1;
-
-    const z1 = row;
-    const z2 = row + 1;
-
-
-    this.addQuad(
-      vertices,
-
-      [
-        x,
-        0,
-        z1
-      ],
-
-      [
-        x,
-        0,
-        z2
-      ],
-
-      [
-        x,
-        1,
-        z2
-      ],
-
-      [
-        x,
-        1,
-        z1
-      ]
-    );
-  }
-
-
-  // =========================================================
-  // GENERIC QUAD
-  // =========================================================
-
-  addQuad(
-    vertices,
-    bottomLeft,
-    bottomRight,
-    topRight,
-    topLeft
-  ) {
-
-    /*
-     * Rectangle becomes two triangles.
-     *
-     * Triangle 1:
-     *
-     * bottomLeft
-     * bottomRight
-     * topRight
-     *
-     * Triangle 2:
-     *
-     * bottomLeft
-     * topRight
-     * topLeft
-     */
-
-
-    // Triangle 1
-
-    this.addVertex(
-      vertices,
-      bottomLeft,
-      0,
-      1
-    );
-
-
-    this.addVertex(
-      vertices,
-      bottomRight,
-      1,
-      1
-    );
-
-
-    this.addVertex(
-      vertices,
-      topRight,
-      1,
-      0
-    );
-
-
-    // Triangle 2
-
-    this.addVertex(
-      vertices,
-      bottomLeft,
-      0,
-      1
-    );
-
-
-    this.addVertex(
-      vertices,
-      topRight,
-      1,
-      0
-    );
-
-
-    this.addVertex(
-      vertices,
-      topLeft,
-      0,
-      0
-    );
-  }
-
-
-  addVertex(
-    vertices,
-    position,
-    u,
-    v
-  ) {
-
-    vertices.push(
-      position[0],
-      position[1],
-      position[2],
-      u,
-      v
-    );
-  }
-
-  addQuadWithUV(
-    vertices,
-    bottomLeft,
-    bottomRight,
-    topRight,
-    topLeft,
-    uMin,
-    uMax
-  ) {
-
-    // Triangle 1
-    this.addVertex(
-      vertices,
-      bottomLeft,
-      uMin,
-      1
-    );
-
-    this.addVertex(
-      vertices,
-      bottomRight,
-      uMax,
-      1
-    );
-
-    this.addVertex(
-      vertices,
-      topRight,
-      uMax,
-      0
-    );
-
-
-    // Triangle 2
-    this.addVertex(
-      vertices,
-      bottomLeft,
-      uMin,
-      1
-    );
-
-    this.addVertex(
-      vertices,
-      topRight,
-      uMax,
-      0
-    );
-
-    this.addVertex(
-      vertices,
-      topLeft,
-      uMin,
-      0
-    );
-  }
-
-  drawAnimatedBillboardSprite(
-    row,
-    col,
-    texture,
-    width,
-    height,
-    frameIndex,
-    frameCount
-  ) {
-
-    if (!texture) {
-      return;
-    }
-
-
-    const centerX =
-      col + 0.5;
-
-    const centerZ =
-      row + 0.5;
-
-
-    const forward =
-      this.getForwardVector();
-
-
-    const rightX =
-      -forward.z;
-
-    const rightZ =
-      forward.x;
-
-
-    const halfWidth =
-      width / 2;
-
-
-    const leftX =
-      centerX
-      -
-      rightX * halfWidth;
-
-    const leftZ =
-      centerZ
-      -
-      rightZ * halfWidth;
-
-
-    const rightXPosition =
-      centerX
-      +
-      rightX * halfWidth;
-
-    const rightZPosition =
-      centerZ
-      +
-      rightZ * halfWidth;
-
-
-    const bottom = 0;
-    const top =
-      bottom + height;
-
-
-    /*
-     * HIVA.png:
-     *
-     * frame 0 = left half
-     * frame 1 = right half
-     */
-
-    const frameWidth =
-      1 / frameCount;
-
-    const uMin =
-      frameIndex * frameWidth;
-
-    const uMax =
-      uMin + frameWidth;
-
-
-    const vertices = [];
-
-
-    this.addQuadWithUV(
-      vertices,
-
-      [
-        leftX,
-        bottom,
-        leftZ
-      ],
-
-      [
-        rightXPosition,
-        bottom,
-        rightZPosition
-      ],
-
-      [
-        rightXPosition,
-        top,
-        rightZPosition
-      ],
-
-      [
-        leftX,
-        top,
-        leftZ
-      ],
-
-      uMin,
-      uMax
-    );
-
-
-    this.uploadDynamicSprite(
-      vertices,
-      texture
-    );
-  }
-
-
-  // =========================================================
-  // TEXTURES
-  // =========================================================
-
-  loadTextures() {
-
-    /*
-     * Dungeon surface textures use flipY = true.
-     *
-     * Sprites use flipY = false.
-     */
-
-
-    this.wallTexture =
-      this.loadTexture(
-        this.texturePaths.wall,
-        true
-      );
-
-
-    this.floorTexture =
-      this.loadTexture(
-        this.texturePaths.floor,
-        true
-      );
-
-
-    this.ceilingTexture =
-      this.loadTexture(
-        this.texturePaths.ceiling,
-        true
-      );
-
-
-    this.wizardTexture =
-      this.loadTexture(
-        this.texturePaths.wizard,
-        false
-      );
-
-
-    this.flowerTexture =
-      this.loadTexture(
-        this.texturePaths.flower,
-        false
-      );
-
-    this.greenPotionTexture =
-      this.loadTexture(
-        this.texturePaths.green_potion,
-        false
-      );
-
-    this.cookiesTexture =
-      this.loadTexture(
-        this.texturePaths.cookies,
-        false
-      );
-
-    this.potionTexture =
-      this.loadTexture(
-        this.texturePaths.potion,
-        false
-      );
-
-
-    this.trapTexture =
-      this.loadTexture(
-        this.texturePaths.trap,
-        false
-      );
-
-    this.exitTexture =
-      this.loadTexture(
-        this.texturePaths.exit,
-        false
-      );
-
-    this.posterTextures = {
-      POSTER_1: this.loadTexture(
-        this.texturePaths.POSTER_1,
-        false
-      ),
-      POSTER_2: this.loadTexture(
-        this.texturePaths.POSTER_2,
-        false
-      ),
-      POSTER_3: this.loadTexture(
-        this.texturePaths.POSTER_3,
-        false
-      ),
-      POSTER_4: this.loadTexture(
-        this.texturePaths.POSTER_4,
-        false
-      ),
-      POSTER_5: this.loadTexture(
-        this.texturePaths.POSTER_5,
-        false
-      ),
-      POSTER_6: this.loadTexture(
-        this.texturePaths.POSTER_6,
-        false
-      ),
-      POSTER_7: this.loadTexture(
-        this.texturePaths.POSTER_7,
-        false
-      ),
-    };
-
-    this.graffitiTextures = {
-      GRAFFITI_1: this.loadTexture(
-        this.texturePaths.GRAFFITI_1,
-        false
-      ),
-      GRAFFITI_2: this.loadTexture(
-        this.texturePaths.GRAFFITI_2,
-        false
-      ),
-      GRAFFITI_3: this.loadTexture(
-        this.texturePaths.GRAFFITI_3,
-        false
-      ),
-      GRAFFITI_4: this.loadTexture(
-        this.texturePaths.GRAFFITI_4,
-        false
-      ),
-      GRAFFITI_5: this.loadTexture(
-        this.texturePaths.GRAFFITI_5,
-        false
-      ),
-      GRAFFITI_6: this.loadTexture(
-        this.texturePaths.GRAFFITI_6,
-        false
-      )
-
-    };
-  }
-
-
-  loadTexture(
-    path,
-    flipY = false
-  ) {
-
-    const gl = this.gl;
-
-
-    const texture =
-      gl.createTexture();
-
-
-    gl.bindTexture(
-      gl.TEXTURE_2D,
-      texture
-    );
-
-
-    /*
-     * Temporary pixel while the image loads.
-     */
-
-    const placeholder =
-      new Uint8Array([
-        70,
-        80,
-        65,
-        255
-      ]);
-
-
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGBA,
-      1,
-      1,
-      0,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      placeholder
-    );
-
-
-    const image =
-      new Image();
-
-
-    image.onload = () => {
-
-      gl.bindTexture(
-        gl.TEXTURE_2D,
-        texture
-      );
-
-
-      /*
-       * Important:
-       *
-       * WebGL remembers this setting globally.
-       * Set it explicitly for every texture.
-       */
-
-      gl.pixelStorei(
-        gl.UNPACK_FLIP_Y_WEBGL,
-        flipY
-      );
-
-
-      gl.texImage2D(
-        gl.TEXTURE_2D,
-        0,
-        gl.RGBA,
-        gl.RGBA,
-        gl.UNSIGNED_BYTE,
-        image
-      );
-
-
-      /*
-       * Pixel-art rendering.
-       */
-
-      gl.texParameteri(
-        gl.TEXTURE_2D,
-        gl.TEXTURE_MIN_FILTER,
-        gl.NEAREST
-      );
-
-
-      gl.texParameteri(
-        gl.TEXTURE_2D,
-        gl.TEXTURE_MAG_FILTER,
-        gl.NEAREST
-      );
-
-
-      /*
-       * Works with arbitrary PNG dimensions.
-       */
-
-      gl.texParameteri(
-        gl.TEXTURE_2D,
-        gl.TEXTURE_WRAP_S,
-        gl.CLAMP_TO_EDGE
-      );
-
-
-      gl.texParameteri(
-        gl.TEXTURE_2D,
-        gl.TEXTURE_WRAP_T,
-        gl.CLAMP_TO_EDGE
-      );
-    };
-
-
-    image.src = path;
-
-
-    return texture;
-  }
-
 
   // =========================================================
   // MAIN RENDER
@@ -1514,7 +241,6 @@ export class DungeonRenderer {
 
     const gl = this.gl;
 
-
     gl.viewport(
       0,
       0,
@@ -1522,28 +248,24 @@ export class DungeonRenderer {
       this.canvas.height
     );
 
-
     gl.clear(
       gl.COLOR_BUFFER_BIT
       |
       gl.DEPTH_BUFFER_BIT
     );
 
-
     gl.useProgram(
-      this.program
+      this.webGLProgram.program
     );
-
 
     const aspect =
       this.canvas.width
       /
       this.canvas.height;
 
-
     const projection =
-      this.createPerspectiveMatrix(
-        this.degreesToRadians(
+      MatrixMath.createPerspective(
+        MatrixMath.degreesToRadians(
           70
         ),
         aspect,
@@ -1551,80 +273,69 @@ export class DungeonRenderer {
         30
       );
 
-
     const view =
       this.createViewMatrix();
 
-
     gl.uniformMatrix4fv(
-      this.projectionLocation,
+      this.webGLProgram.projectionLocation,
       false,
       projection
     );
 
-
     gl.uniformMatrix4fv(
-      this.viewLocation,
+      this.webGLProgram.viewLocation,
       false,
       view
     );
 
-
     gl.uniform1i(
-      this.samplerLocation,
+      this.webGLProgram.samplerLocation,
       0
     );
 
     gl.uniform1f(
-      this.fogStartLocation,
+      this.webGLProgram.fogStartLocation,
       1.0
     );
 
-
     gl.uniform1f(
-      this.fogEndLocation,
+      this.webGLProgram.fogEndLocation,
       5.5
     );
 
-
     gl.uniform3f(
-      this.fogColorLocation,
+      this.webGLProgram.fogColorLocation,
       0.03,
       0.04,
       0.03
     );
 
-
     // ---------------------------------------------------------
     // FLOOR
     // ---------------------------------------------------------
-
-    this.drawBuffer(
+    this.webGLProgram.drawBuffer(
       this.floorBuffer,
       this.floorVertexCount,
-      this.floorTexture
+      this.textureManager.get("floor")
     );
 
 
     // ---------------------------------------------------------
     // CEILING
     // ---------------------------------------------------------
-
-    this.drawBuffer(
+    this.webGLProgram.drawBuffer(
       this.ceilingBuffer,
       this.ceilingVertexCount,
-      this.ceilingTexture
+      this.textureManager.get("ceiling")
     );
-
 
     // ---------------------------------------------------------
     // WALLS
     // ---------------------------------------------------------
-
-    this.drawBuffer(
+    this.webGLProgram.drawBuffer(
       this.wallBuffer,
       this.wallVertexCount,
-      this.wallTexture
+      this.textureManager.get("wall")
     );
 
     // ---------------------------------------------------------
@@ -1637,9 +348,9 @@ export class DungeonRenderer {
       ) {
 
       const texture =
-        this.graffitiTextures[
+        this.textureManager.get(
           graffiti.texture
-          ];
+        );
 
 
       if (texture) {
@@ -1680,13 +391,19 @@ export class DungeonRenderer {
     switch (artifact) {
 
       case "FLOWER":
-        return this.flowerTexture;
+        return this.textureManager.get(
+          "flower"
+        );
 
       case "POTION_GREEN":
-        return this.greenPotionTexture;
+        return this.textureManager.get(
+          "green_potion"
+        );
 
       case "COOKIES":
-        return this.cookiesTexture;
+        return this.textureManager.get(
+          "cookies"
+        );
 
       default:
         return null;
@@ -1721,9 +438,9 @@ export class DungeonRenderer {
         if (room.poster !== null) {
 
           const texture =
-            this.posterTextures[
+            this.textureManager.get(
               room.poster.type
-              ];
+            );
 
           this.drawWallPoster(
             row,
@@ -1745,25 +462,31 @@ export class DungeonRenderer {
             );
 
 
-          this.drawFloatingBillboardSprite(
-            row,
-            col,
-            texture,
-            0.40,
-            0.40
-          );
+          this.spriteRenderer
+            .drawFloatingBillboardSprite(
+              row,
+              col,
+              texture,
+              0.40,
+              0.40,
+              this.animationTime
+            );
         }
 
         // Potion
         if (room.hasPotion) {
 
-          this.drawFloatingBillboardSprite(
-            row,
-            col,
-            this.potionTexture,
-            0.30,
-            0.35
-          );
+          this.spriteRenderer
+            .drawFloatingBillboardSprite(
+              row,
+              col,
+              this.textureManager.get(
+                "potion"
+              ),
+              0.30,
+              0.35,
+              this.animationTime
+            );
         }
 
 
@@ -1774,20 +497,64 @@ export class DungeonRenderer {
           !room.trapTriggered
         ) {
 
-          this.drawFloorSprite(
-            row,
-            col,
-            this.trapTexture,
-            0.65
-          );
+          this.spriteRenderer
+            .drawFloorSprite(
+              row,
+              col,
+              this.textureManager.get(
+                "trap"
+              ),
+              0.65
+            );
         }
       }
     }
   }
 
   // =========================================================
-// WALL POSTER
-// =========================================================
+  // WALL DECORATIONS
+  // =========================================================
+  getWallPlane(
+    row,
+    col,
+    wall,
+    offset
+  ) {
+
+    switch (wall) {
+
+      case "NORTH":
+        return {
+          axis: "Z",
+          position: row + offset,
+          direction: 1
+        };
+
+      case "SOUTH":
+        return {
+          axis: "Z",
+          position: row + 1 - offset,
+          direction: -1
+        };
+
+      case "WEST":
+        return {
+          axis: "X",
+          position: col + offset,
+          direction: -1
+        };
+
+      case "EAST":
+        return {
+          axis: "X",
+          position: col + 1 - offset,
+          direction: 1
+        };
+
+      default:
+        return null;
+    }
+  }
 
   drawWallPoster(
     row,
@@ -1799,6 +566,7 @@ export class DungeonRenderer {
     if (!texture) {
       return;
     }
+
 
     const width = 0.55;
     const height = 0.65;
@@ -1814,8 +582,10 @@ export class DungeonRenderer {
     const top =
       centerY + height / 2;
 
+
     // Prevent z-fighting with wall.
     const offset = 0.005;
+
 
     const centerX =
       col + 0.5;
@@ -1823,674 +593,113 @@ export class DungeonRenderer {
     const centerZ =
       row + 0.5;
 
+
     const vertices = [];
 
-    switch (wall) {
 
-      case "NORTH": {
+    const plane =
+      this.getWallPlane(
+        row,
+        col,
+        wall,
+        offset
+      );
 
-        const z =
-          row + offset;
 
-        this.addQuad(
-          vertices,
-
-          [
-            centerX - halfWidth,
-            bottom,
-            z
-          ],
-
-          [
-            centerX + halfWidth,
-            bottom,
-            z
-          ],
-
-          [
-            centerX + halfWidth,
-            top,
-            z
-          ],
-
-          [
-            centerX - halfWidth,
-            top,
-            z
-          ]
-        );
-
-        break;
-      }
-
-      case "SOUTH": {
-
-        const z =
-          row + 1 - offset;
-
-        this.addQuad(
-          vertices,
-
-          [
-            centerX + halfWidth,
-            bottom,
-            z
-          ],
-
-          [
-            centerX - halfWidth,
-            bottom,
-            z
-          ],
-
-          [
-            centerX - halfWidth,
-            top,
-            z
-          ],
-
-          [
-            centerX + halfWidth,
-            top,
-            z
-          ]
-        );
-
-        break;
-      }
-
-      case "WEST": {
-
-        const x =
-          col + offset;
-
-        this.addQuad(
-          vertices,
-
-          [
-            x,
-            bottom,
-            centerZ + halfWidth
-          ],
-
-          [
-            x,
-            bottom,
-            centerZ - halfWidth
-          ],
-
-          [
-            x,
-            top,
-            centerZ - halfWidth
-          ],
-
-          [
-            x,
-            top,
-            centerZ + halfWidth
-          ]
-        );
-
-        break;
-      }
-
-      case "EAST": {
-
-        const x =
-          col + 1 - offset;
-
-        this.addQuad(
-          vertices,
-
-          [
-            x,
-            bottom,
-            centerZ - halfWidth
-          ],
-
-          [
-            x,
-            bottom,
-            centerZ + halfWidth
-          ],
-
-          [
-            x,
-            top,
-            centerZ + halfWidth
-          ],
-
-          [
-            x,
-            top,
-            centerZ - halfWidth
-          ]
-        );
-
-        break;
-      }
-
-      default:
-        return;
-    }
-
-    this.uploadDynamicSprite(
-      vertices,
-      texture
-    );
-  }
-
-  // =========================================================
-  // WALL GRAFFITI
-  // =========================================================
-
-  findHorizontalGraffitiCandidates(
-    length,
-    occupiedWalls,
-    candidates
-  ) {
-
-    for (
-      let wallRow = 0;
-      wallRow <= this.dungeon.rows;
-      wallRow++
-    ) {
-
-      for (
-        let startCol = 0;
-        startCol <=
-        this.dungeon.cols - length;
-        startCol++
-      ) {
-
-        /*
-         * A horizontal physical wall at wallRow
-         * separates:
-         *
-         * row wallRow - 1  [SOUTH face]
-         * -----------------------------
-         * row wallRow      [NORTH face]
-         */
-
-
-        const wallKeys = [];
-
-        let physicalWallExists =
-          true;
-
-
-        for (
-          let i = 0;
-          i < length;
-          i++
-        ) {
-
-          const col =
-            startCol + i;
-
-
-          const key =
-            "H:"
-            + wallRow
-            + ":"
-            + col;
-
-
-          if (
-            occupiedWalls.has(key)
-          ) {
-
-            physicalWallExists = false;
-            break;
-          }
-
-
-          wallKeys.push(key);
-
-
-          /*
-           * Determine whether this physical
-           * horizontal wall actually exists.
-           */
-
-          if (
-            wallRow <
-            this.dungeon.rows
-          ) {
-
-            const roomBelow =
-              this.dungeon.getRoom(
-                wallRow,
-                col
-              );
-
-
-            if (roomBelow.northDoor) {
-
-              physicalWallExists = false;
-              break;
-            }
-          }
-
-          else {
-
-            /*
-             * Bottom dungeon boundary.
-             */
-            const roomAbove =
-              this.dungeon.getRoom(
-                wallRow - 1,
-                col
-              );
-
-
-            if (roomAbove.southDoor) {
-
-              physicalWallExists = false;
-              break;
-            }
-          }
-        }
-
-
-        if (!physicalWallExists) {
-          continue;
-        }
-
-
-        // -----------------------------------------
-        // NORTH FACE
-        // -----------------------------------------
-
-        if (
-          wallRow <
-          this.dungeon.rows
-          &&
-          this.isHorizontalFaceClear(
-            wallRow,
-            startCol,
-            length
-          )
-        ) {
-
-          candidates.push({
-            row: wallRow,
-            col: startCol,
-            wall: "NORTH",
-            length: length,
-            wallKeys: wallKeys
-          });
-        }
-
-
-        // -----------------------------------------
-        // SOUTH FACE
-        // -----------------------------------------
-
-        if (
-          wallRow > 0
-          &&
-          this.isHorizontalFaceClear(
-            wallRow - 1,
-            startCol,
-            length
-          )
-        ) {
-
-          candidates.push({
-            row: wallRow - 1,
-            col: startCol,
-            wall: "SOUTH",
-            length: length,
-            wallKeys: wallKeys
-          });
-        }
-      }
-    }
-  }
-
-
-  findVerticalGraffitiCandidates(
-    length,
-    occupiedWalls,
-    candidates
-  ) {
-
-    for (
-      let wallCol = 0;
-      wallCol <= this.dungeon.cols;
-      wallCol++
-    ) {
-
-      for (
-        let startRow = 0;
-        startRow <=
-        this.dungeon.rows - length;
-        startRow++
-      ) {
-
-        /*
-         * A vertical physical wall at wallCol
-         * separates:
-         *
-         * WEST-facing room | EAST-facing room
-         */
-
-
-        const wallKeys = [];
-
-        let physicalWallExists =
-          true;
-
-
-        for (
-          let i = 0;
-          i < length;
-          i++
-        ) {
-
-          const row =
-            startRow + i;
-
-
-          const key =
-            "V:"
-            + row
-            + ":"
-            + wallCol;
-
-
-          if (
-            occupiedWalls.has(key)
-          ) {
-
-            physicalWallExists = false;
-            break;
-          }
-
-
-          wallKeys.push(key);
-
-
-          if (
-            wallCol <
-            this.dungeon.cols
-          ) {
-
-            const roomRight =
-              this.dungeon.getRoom(
-                row,
-                wallCol
-              );
-
-
-            if (roomRight.westDoor) {
-
-              physicalWallExists = false;
-              break;
-            }
-          }
-
-          else {
-
-            /*
-             * Right dungeon boundary.
-             */
-            const roomLeft =
-              this.dungeon.getRoom(
-                row,
-                wallCol - 1
-              );
-
-
-            if (roomLeft.eastDoor) {
-
-              physicalWallExists = false;
-              break;
-            }
-          }
-        }
-
-
-        if (!physicalWallExists) {
-          continue;
-        }
-
-
-        // -----------------------------------------
-        // WEST FACE
-        // -----------------------------------------
-
-        if (
-          wallCol <
-          this.dungeon.cols
-          &&
-          this.isVerticalFaceClear(
-            startRow,
-            wallCol,
-            length
-          )
-        ) {
-
-          candidates.push({
-            row: startRow,
-            col: wallCol,
-            wall: "WEST",
-            length: length,
-            wallKeys: wallKeys
-          });
-        }
-
-
-        // -----------------------------------------
-        // EAST FACE
-        // -----------------------------------------
-
-        if (
-          wallCol > 0
-          &&
-          this.isVerticalFaceClear(
-            startRow,
-            wallCol - 1,
-            length
-          )
-        ) {
-
-          candidates.push({
-            row: startRow,
-            col: wallCol - 1,
-            wall: "EAST",
-            length: length,
-            wallKeys: wallKeys
-          });
-        }
-      }
-    }
-  }
-
-  isHorizontalFaceClear(
-    row,
-    startCol,
-    length
-  ) {
-
-    for (
-      let i = 0;
-      i < length - 1;
-      i++
-    ) {
-
-      const room =
-        this.dungeon.getRoom(
-          row,
-          startCol + i
-        );
-
-
-      /*
-       * A wall between these rooms would
-       * physically slice through the mural.
-       */
-      if (!room.eastDoor) {
-        return false;
-      }
+    if (!plane) {
+      return;
     }
 
 
-    return true;
-  }
+    if (plane.axis === "Z") {
+
+      const leftX =
+        centerX
+        -
+        halfWidth * plane.direction;
+
+      const rightX =
+        centerX
+        +
+        halfWidth * plane.direction;
 
 
-  isVerticalFaceClear(
-    startRow,
-    col,
-    length
-  ) {
+      GeometryBuilder.addQuad(
+        vertices,
 
-    for (
-      let i = 0;
-      i < length - 1;
-      i++
-    ) {
+        [
+          leftX,
+          bottom,
+          plane.position
+        ],
 
-      const room =
-        this.dungeon.getRoom(
-          startRow + i,
-          col
-        );
+        [
+          rightX,
+          bottom,
+          plane.position
+        ],
+
+        [
+          rightX,
+          top,
+          plane.position
+        ],
+
+        [
+          leftX,
+          top,
+          plane.position
+        ]
+      );
+
+    } else {
+
+      const firstZ =
+        centerZ
+        -
+        halfWidth * plane.direction;
+
+      const secondZ =
+        centerZ
+        +
+        halfWidth * plane.direction;
 
 
-      if (!room.southDoor) {
-        return false;
-      }
+      GeometryBuilder.addQuad(
+        vertices,
+
+        [
+          plane.position,
+          bottom,
+          firstZ
+        ],
+
+        [
+          plane.position,
+          bottom,
+          secondZ
+        ],
+
+        [
+          plane.position,
+          top,
+          secondZ
+        ],
+
+        [
+          plane.position,
+          top,
+          firstZ
+        ]
+      );
     }
 
 
-    return true;
-  }
-
-  // =========================================================
-  // GRAFFITI PLACEMENT
-  // =========================================================
-
-  generateGraffiti() {
-
-    this.graffitiPlacements = [];
-
-
-    const graffitiTypes = [
-      "GRAFFITI_1",
-      "GRAFFITI_2",
-      "GRAFFITI_3",
-      "GRAFFITI_4",
-      "GRAFFITI_5",
-      "GRAFFITI_6"
-    ];
-
-
-    /*
-     * Track physical wall segments already occupied
-     * by another mural.
-     */
-    const occupiedWalls =
-      new Set();
-
-
-    for (
-      const texture
-      of graffitiTypes
-      ) {
-
-      /*
-       * Prefer a 3-wall mural.
-       * If none remain, try 2 walls.
-       */
-      let candidates =
-        this.findGraffitiCandidates(
-          3,
-          occupiedWalls
-        );
-
-
-      if (candidates.length === 0) {
-
-        candidates =
-          this.findGraffitiCandidates(
-            2,
-            occupiedWalls
-          );
-      }
-
-
-      if (candidates.length === 0) {
-
-        console.warn(
-          "No valid location for",
-          texture
-        );
-
-        continue;
-      }
-
-
-      const candidate =
-        candidates[
-          Math.floor(
-            Math.random()
-            * candidates.length
-          )
-          ];
-
-
-      this.graffitiPlacements.push({
-        row: candidate.row,
-        col: candidate.col,
-        wall: candidate.wall,
-        length: candidate.length,
-        texture: texture
-      });
-
-
-      /*
-       * Reserve every physical wall segment
-       * occupied by this mural.
-       */
-      for (
-        const key
-        of candidate.wallKeys
-        ) {
-
-        occupiedWalls.add(key);
-      }
-    }
-
-  }
-
-
-  findGraffitiCandidates(
-    length,
-    occupiedWalls
-  ) {
-
-    const candidates = [];
-
-
-    this.findHorizontalGraffitiCandidates(
-      length,
-      occupiedWalls,
-      candidates
-    );
-
-
-    this.findVerticalGraffitiCandidates(
-      length,
-      occupiedWalls,
-      candidates
-    );
-
-
-    return candidates;
+    this.spriteRenderer
+      .uploadDynamicSprite(
+        vertices,
+        texture
+      );
   }
 
   drawWallGraffiti(
@@ -2515,6 +724,20 @@ export class DungeonRenderer {
     const offset = 0.003;
 
 
+    const plane =
+      this.getWallPlane(
+        row,
+        col,
+        wall,
+        offset
+      );
+
+
+    if (!plane) {
+      return;
+    }
+
+
     for (
       let segment = 0;
       segment < length;
@@ -2528,470 +751,151 @@ export class DungeonRenderer {
         (segment + 1) / length;
 
 
-      switch (wall) {
-
-        // -----------------------------------------
-        // NORTH
-        // -----------------------------------------
-
-        case "NORTH": {
-
-          const segmentCol =
-            col + segment;
-
-          const x1 =
-            segmentCol;
-
-          const x2 =
-            segmentCol + 1;
-
-          const z =
-            row + offset;
+      /*
+       * SOUTH and WEST traverse their wall
+       * geometry in the opposite direction.
+       */
+      const reversed =
+        plane.direction === -1;
 
 
-          this.addQuadWithUV(
-            vertices,
+      const segmentUMin =
+        reversed
+          ? 1 - uMax
+          : uMin;
 
-            [x1, bottom, z],
-            [x2, bottom, z],
-            [x2, top, z],
-            [x1, top, z],
-
-            uMin,
-            uMax
-          );
-
-          break;
-        }
+      const segmentUMax =
+        reversed
+          ? 1 - uMin
+          : uMax;
 
 
-        // -----------------------------------------
-        // SOUTH
-        // -----------------------------------------
+      if (plane.axis === "Z") {
 
-        case "SOUTH": {
+        const segmentCol =
+          col + segment;
 
-          const segmentCol =
-            col + segment;
+        const startX =
+          segmentCol;
 
-          const x1 =
-            segmentCol;
-
-          const x2 =
-            segmentCol + 1;
-
-          const z =
-            row + 1 - offset;
+        const endX =
+          segmentCol + 1;
 
 
-          this.addQuadWithUV(
-            vertices,
+        const firstX =
+          plane.direction === 1
+            ? startX
+            : endX;
 
-            [x2, bottom, z],
-            [x1, bottom, z],
-            [x1, top, z],
-            [x2, top, z],
-
-            1 - uMax,
-            1 - uMin
-          );
-
-          break;
-        }
+        const secondX =
+          plane.direction === 1
+            ? endX
+            : startX;
 
 
-        // -----------------------------------------
-        // WEST
-        // -----------------------------------------
+        GeometryBuilder.addQuadWithUV(
+          vertices,
 
-        case "WEST": {
+          [
+            firstX,
+            bottom,
+            plane.position
+          ],
 
-          const segmentRow =
-            row + segment;
+          [
+            secondX,
+            bottom,
+            plane.position
+          ],
 
-          const z1 =
-            segmentRow;
+          [
+            secondX,
+            top,
+            plane.position
+          ],
 
-          const z2 =
-            segmentRow + 1;
+          [
+            firstX,
+            top,
+            plane.position
+          ],
 
-          const x =
-            col + offset;
+          segmentUMin,
+          segmentUMax
+        );
 
+      } else {
 
-          this.addQuadWithUV(
-            vertices,
+        const segmentRow =
+          row + segment;
 
-            [x, bottom, z2],
-            [x, bottom, z1],
-            [x, top, z1],
-            [x, top, z2],
+        const startZ =
+          segmentRow;
 
-            1 - uMax,
-            1 - uMin
-          );
-
-          break;
-        }
-
-
-        // -----------------------------------------
-        // EAST
-        // -----------------------------------------
-
-        case "EAST": {
-
-          const segmentRow =
-            row + segment;
-
-          const z1 =
-            segmentRow;
-
-          const z2 =
-            segmentRow + 1;
-
-          const x =
-            col + 1 - offset;
+        const endZ =
+          segmentRow + 1;
 
 
-          this.addQuadWithUV(
-            vertices,
+        /*
+         * WEST has direction -1 and therefore
+         * traverses high Z to low Z.
+         * EAST traverses low Z to high Z.
+         */
+        const firstZ =
+          plane.direction === -1
+            ? endZ
+            : startZ;
 
-            [x, bottom, z1],
-            [x, bottom, z2],
-            [x, top, z2],
-            [x, top, z1],
+        const secondZ =
+          plane.direction === -1
+            ? startZ
+            : endZ;
 
-            uMin,
-            uMax
-          );
 
-          break;
-        }
+        GeometryBuilder.addQuadWithUV(
+          vertices,
+
+          [
+            plane.position,
+            bottom,
+            firstZ
+          ],
+
+          [
+            plane.position,
+            bottom,
+            secondZ
+          ],
+
+          [
+            plane.position,
+            top,
+            secondZ
+          ],
+
+          [
+            plane.position,
+            top,
+            firstZ
+          ],
+
+          segmentUMin,
+          segmentUMax
+        );
       }
     }
 
-
-    this.uploadDynamicSprite(
-      vertices,
-      texture
-    );
+    this.spriteRenderer
+      .uploadDynamicSprite(
+        vertices,
+        texture
+      );
   }
 
 
   // =========================================================
-  // GENERIC BILLBOARD SPRITE
+  // EXIT SPRITE
   // =========================================================
-
-  drawBillboardSprite(
-    row,
-    col,
-    texture,
-    width,
-    height
-  ) {
-
-    if (!texture) {
-      return;
-    }
-
-    const centerX =
-      col + 0.5;
-
-
-    const centerZ =
-      row + 0.5;
-
-
-    /*
-     * Player camera direction.
-     */
-
-    const forward =
-      this.getForwardVector();
-
-
-    /*
-     * Perpendicular vector gives us
-     * the horizontal billboard axis.
-     */
-
-    const rightX =
-      -forward.z;
-
-
-    const rightZ =
-      forward.x;
-
-
-    const halfWidth =
-      width / 2;
-
-
-    const leftX =
-      centerX
-      -
-      rightX * halfWidth;
-
-
-    const leftZ =
-      centerZ
-      -
-      rightZ * halfWidth;
-
-
-    const rightXPosition =
-      centerX
-      +
-      rightX * halfWidth;
-
-
-    const rightZPosition =
-      centerZ
-      +
-      rightZ * halfWidth;
-
-    const bottom = 0;
-
-
-    const top =
-      bottom + height;
-
-
-    const vertices = [];
-
-
-    this.addQuad(
-      vertices,
-
-      [
-        leftX,
-        bottom,
-        leftZ
-      ],
-
-      [
-        rightXPosition,
-        bottom,
-        rightZPosition
-      ],
-
-      [
-        rightXPosition,
-        top,
-        rightZPosition
-      ],
-
-      [
-        leftX,
-        top,
-        leftZ
-      ]
-    );
-
-
-    this.uploadDynamicSprite(
-      vertices,
-      texture
-    );
-  }
-
-  drawFloatingBillboardSprite(
-    row,
-    col,
-    texture,
-    width,
-    height
-  ) {
-
-    if (!texture) {
-      return;
-    }
-
-
-    const centerX =
-      col + 0.5;
-
-    const centerZ =
-      row + 0.5;
-
-
-    const forward =
-      this.getForwardVector();
-
-
-    const rightX =
-      -forward.z;
-
-    const rightZ =
-      forward.x;
-
-
-    const halfWidth =
-      width / 2;
-
-
-    const leftX =
-      centerX
-      -
-      rightX * halfWidth;
-
-    const leftZ =
-      centerZ
-      -
-      rightZ * halfWidth;
-
-
-    const rightXPosition =
-      centerX
-      +
-      rightX * halfWidth;
-
-    const rightZPosition =
-      centerZ
-      +
-      rightZ * halfWidth;
-
-
-    // Small vertical bob
-    const bob =
-      Math.sin(
-        this.animationTime * 0.003
-      )
-      *
-      0.04;
-
-
-    // Middle of the room
-    const centerY =
-      0.5 + bob;
-
-
-    const bottom =
-      centerY
-      -
-      height / 2;
-
-    const top =
-      centerY
-      +
-      height / 2;
-
-
-    const vertices = [];
-
-
-    this.addQuad(
-      vertices,
-
-      [
-        leftX,
-        bottom,
-        leftZ
-      ],
-
-      [
-        rightXPosition,
-        bottom,
-        rightZPosition
-      ],
-
-      [
-        rightXPosition,
-        top,
-        rightZPosition
-      ],
-
-      [
-        leftX,
-        top,
-        leftZ
-      ]
-    );
-
-
-    this.uploadDynamicSprite(
-      vertices,
-      texture
-    );
-  }
-
-
-  // =========================================================
-  // FLOOR SPRITE
-  // =========================================================
-
-  drawFloorSprite(
-    row,
-    col,
-    texture,
-    size
-  ) {
-
-    if (!texture) {
-      return;
-    }
-
-
-    const centerX =
-      col + 0.5;
-
-
-    const centerZ =
-      row + 0.5;
-
-
-    const half =
-      size / 2;
-
-
-    /*
-     * Slight offset prevents z-fighting
-     * with the actual floor.
-     */
-
-    const y =
-      0.005;
-
-
-    const vertices = [];
-
-
-    this.addQuad(
-      vertices,
-
-      [
-        centerX - half,
-        y,
-        centerZ - half
-      ],
-
-      [
-        centerX + half,
-        y,
-        centerZ - half
-      ],
-
-      [
-        centerX + half,
-        y,
-        centerZ + half
-      ],
-
-      [
-        centerX - half,
-        y,
-        centerZ + half
-      ]
-    );
-
-
-    this.uploadDynamicSprite(
-      vertices,
-      texture
-    );
-  }
-
   drawExitSprite() {
 
     const row =
@@ -3001,15 +905,18 @@ export class DungeonRenderer {
       this.dungeon.exitPosition.col;
 
 
-    this.drawAnimatedBillboardSprite(
-      row,
-      col,
-      this.exitTexture,
-      0.45,
-      0.60,
-      this.exitAnimationFrame,
-      2
-    );
+    this.spriteRenderer
+      .drawAnimatedBillboardSprite(
+        row,
+        col,
+        this.textureManager.get(
+          "exit"
+        ),
+        0.45,
+        0.60,
+        this.exitAnimationFrame,
+        2
+      );
   }
 
   startAnimationLoop() {
@@ -3043,8 +950,7 @@ export class DungeonRenderer {
       // -----------------------------------------
       // CAMERA ANIMATION
       // -----------------------------------------
-
-      this.updateCamera(
+      this.camera.update(
         deltaTime
       );
 
@@ -3100,657 +1006,84 @@ export class DungeonRenderer {
     );
   }
 
-
-  // =========================================================
-  // DYNAMIC SPRITE DRAW
-  // =========================================================
-
-  uploadDynamicSprite(
-    vertices,
-    texture
-  ) {
-
-    const gl =
-      this.gl;
-
-
-    gl.bindBuffer(
-      gl.ARRAY_BUFFER,
-      this.spriteBuffer
-    );
-
-
-    gl.bufferData(
-      gl.ARRAY_BUFFER,
-      new Float32Array(
-        vertices
-      ),
-      gl.DYNAMIC_DRAW
-    );
-
-
-    gl.enable(
-      gl.BLEND
-    );
-
-
-    gl.blendFunc(
-      gl.SRC_ALPHA,
-      gl.ONE_MINUS_SRC_ALPHA
-    );
-
-
-    // Sprites participate in depth normally.
-    gl.depthMask(
-      true
-    );
-
-
-    const vertexCount =
-      vertices.length / 5;
-
-    this.drawBuffer(
-      this.spriteBuffer,
-      vertexCount,
-      texture
-    );
-
-
-    gl.disable(
-      gl.BLEND
-    );
-  }
-
-
   // =========================================================
   // WIZARD
   // =========================================================
-
   drawWizard() {
 
-    this.drawBillboardSprite(
-      this.wizard.row,
-      this.wizard.col,
-      this.wizardTexture,
-      0.55,
-      0.85
-    );
+    this.spriteRenderer
+      .drawBillboardSprite(
+        this.wizard.row,
+        this.wizard.col,
+        this.textureManager.get(
+          "wizard"
+        ),
+        0.55,
+        0.85
+      );
   }
-
-
-  // =========================================================
-  // DRAW BUFFER
-  // =========================================================
-
-  drawBuffer(
-    buffer,
-    vertexCount,
-    texture
-  ) {
-
-    const gl = this.gl;
-
-
-    gl.bindBuffer(
-      gl.ARRAY_BUFFER,
-      buffer
-    );
-
-
-    /*
-     * Vertex layout:
-     *
-     * x y z u v
-     *
-     * 5 floats total.
-     */
-
-    const stride =
-      5
-      *
-      Float32Array.BYTES_PER_ELEMENT;
-
-
-    // ---------------------------------------------------------
-    // POSITION
-    // ---------------------------------------------------------
-
-    gl.enableVertexAttribArray(
-      this.positionLocation
-    );
-
-
-    gl.vertexAttribPointer(
-      this.positionLocation,
-      3,
-      gl.FLOAT,
-      false,
-      stride,
-      0
-    );
-
-
-    // ---------------------------------------------------------
-    // TEXTURE COORDINATES
-    // ---------------------------------------------------------
-
-    gl.enableVertexAttribArray(
-      this.textureLocation
-    );
-
-
-    gl.vertexAttribPointer(
-      this.textureLocation,
-      2,
-      gl.FLOAT,
-      false,
-      stride,
-      3
-      *
-      Float32Array.BYTES_PER_ELEMENT
-    );
-
-
-    // ---------------------------------------------------------
-    // TEXTURE
-    // ---------------------------------------------------------
-
-    gl.activeTexture(
-      gl.TEXTURE0
-    );
-
-
-    gl.bindTexture(
-      gl.TEXTURE_2D,
-      texture
-    );
-
-
-    // ---------------------------------------------------------
-    // DRAW
-    // ---------------------------------------------------------
-
-    gl.drawArrays(
-      gl.TRIANGLES,
-      0,
-      vertexCount
-    );
-  }
-
 
   // =========================================================
   // CAMERA
   // =========================================================
-
   createViewMatrix() {
-
     const eye = [
-
-      this.cameraX,
-
+      this.camera.x,
       0.5,
-
-      this.cameraZ
+      this.camera.z
     ];
-
 
     const forwardX =
       Math.sin(
-        this.cameraAngle
+        this.camera.angle
       );
 
     const forwardZ =
       -Math.cos(
-        this.cameraAngle
+        this.camera.angle
       );
 
-
     const target = [
-
       eye[0] + forwardX,
-
       eye[1],
-
       eye[2] + forwardZ
     ];
 
+    const up = [0, 1, 0];
 
-    const up = [
-      0,
-      1,
-      0
-    ];
-
-
-    return this.createLookAtMatrix(
-      eye,
-      target,
-      up
-    );
-  }
-
-  directionToAngle(
-    direction
-  ) {
-
-    switch (direction) {
-
-      case "NORTH":
-        return 0;
-
-      case "EAST":
-        return Math.PI / 2;
-
-      case "SOUTH":
-        return Math.PI;
-
-      case "WEST":
-        return -Math.PI / 2;
-
-      default:
-        return 0;
-    }
+    return MatrixMath.createLookAt(eye, target, up);
   }
 
 
   getForwardVector() {
-
-    switch (
-      this.player.direction
-      ) {
-
+    switch (this.player.direction) {
       case "NORTH":
-
-        return {
-          x: 0,
-          z: -1
-        };
-
+        return {x: 0, z: -1};
 
       case "EAST":
-
-        return {
-          x: 1,
-          z: 0
-        };
-
+        return {x: 1, z: 0};
 
       case "SOUTH":
-
-        return {
-          x: 0,
-          z: 1
-        };
+        return {x: 0, z: 1};
 
 
       case "WEST":
-
-        return {
-          x: -1,
-          z: 0
-        };
-
+        return {x: -1, z: 0};
 
       default:
-
-        return {
-          x: 0,
-          z: -1
-        };
+        return {x: 0, z: -1};
     }
-  }
-
-  updateCamera(
-    deltaTime
-  ) {
-
-    this.targetCameraX =
-      this.player.col + 0.5;
-
-    this.targetCameraZ =
-      this.player.row + 0.5;
-
-    this.targetCameraAngle =
-      this.directionToAngle(
-        this.player.direction
-      );
-
-
-    const moveAmount =
-      Math.min(
-        1,
-        deltaTime
-        * this.cameraMoveSpeed
-      );
-
-
-    this.cameraX +=
-      (
-        this.targetCameraX
-        - this.cameraX
-      )
-      * moveAmount;
-
-
-    this.cameraZ +=
-      (
-        this.targetCameraZ
-        - this.cameraZ
-      )
-      * moveAmount;
-
-
-    // Find shortest rotational distance.
-    let angleDifference =
-      this.targetCameraAngle
-      - this.cameraAngle;
-
-
-    angleDifference =
-      Math.atan2(
-        Math.sin(angleDifference),
-        Math.cos(angleDifference)
-      );
-
-
-    const turnAmount =
-      Math.min(
-        1,
-        deltaTime
-        * this.cameraTurnSpeed
-      );
-
-
-    this.cameraAngle +=
-      angleDifference
-      * turnAmount;
-  }
-
-
-  // =========================================================
-  // PERSPECTIVE MATRIX
-  // =========================================================
-
-  createPerspectiveMatrix(
-    fieldOfView,
-    aspect,
-    near,
-    far
-  ) {
-
-    const f =
-      1.0
-      /
-      Math.tan(
-        fieldOfView / 2
-      );
-
-
-    const rangeInverse =
-      1
-      /
-      (
-        near - far
-      );
-
-
-    return new Float32Array([
-
-      f / aspect,
-      0,
-      0,
-      0,
-
-
-      0,
-      f,
-      0,
-      0,
-
-
-      0,
-      0,
-      (
-        near + far
-      )
-      *
-      rangeInverse,
-      -1,
-
-
-      0,
-      0,
-      (
-        2
-        *
-        near
-        *
-        far
-      )
-      *
-      rangeInverse,
-      0
-    ]);
-  }
-
-
-  // =========================================================
-  // LOOK-AT MATRIX
-  // =========================================================
-
-  createLookAtMatrix(
-    eye,
-    target,
-    up
-  ) {
-
-    /*
-     * Camera backwards axis.
-     */
-
-    const zAxis =
-      this.normalize([
-
-        eye[0]
-        -
-        target[0],
-
-        eye[1]
-        -
-        target[1],
-
-        eye[2]
-        -
-        target[2]
-      ]);
-
-
-    /*
-     * Camera right axis.
-     */
-
-    const xAxis =
-      this.normalize(
-        this.cross(
-          up,
-          zAxis
-        )
-      );
-
-
-    /*
-     * Camera up axis.
-     */
-
-    const yAxis =
-      this.cross(
-        zAxis,
-        xAxis
-      );
-
-
-    return new Float32Array([
-
-      xAxis[0],
-      yAxis[0],
-      zAxis[0],
-      0,
-
-
-      xAxis[1],
-      yAxis[1],
-      zAxis[1],
-      0,
-
-
-      xAxis[2],
-      yAxis[2],
-      zAxis[2],
-      0,
-
-
-      -this.dot(
-        xAxis,
-        eye
-      ),
-
-      -this.dot(
-        yAxis,
-        eye
-      ),
-
-      -this.dot(
-        zAxis,
-        eye
-      ),
-
-      1
-    ]);
-  }
-
-
-  // =========================================================
-  // VECTOR HELPERS
-  // =========================================================
-
-  normalize(vector) {
-
-    const length =
-      Math.sqrt(
-
-        vector[0]
-        *
-        vector[0]
-
-        +
-
-        vector[1]
-        *
-        vector[1]
-
-        +
-
-        vector[2]
-        *
-        vector[2]
-      );
-
-
-    if (length === 0) {
-
-      return [
-        0,
-        0,
-        0
-      ];
-    }
-
-
-    return [
-
-      vector[0]
-      /
-      length,
-
-      vector[1]
-      /
-      length,
-
-      vector[2]
-      /
-      length
-    ];
-  }
-
-
-  cross(a, b) {
-
-    return [
-
-      a[1] * b[2]
-      -
-      a[2] * b[1],
-
-
-      a[2] * b[0]
-      -
-      a[0] * b[2],
-
-
-      a[0] * b[1]
-      -
-      a[1] * b[0]
-    ];
-  }
-
-
-  dot(a, b) {
-
-    return (
-
-      a[0] * b[0]
-
-      +
-
-      a[1] * b[1]
-
-      +
-
-      a[2] * b[2]
-    );
-  }
-
-
-  degreesToRadians(
-    degrees
-  ) {
-
-    return (
-
-      degrees
-      *
-      Math.PI
-      /
-      180
-    );
   }
 
   resizeCanvas() {
-
     const pixelRatio =
-      Math.min(
-        window.devicePixelRatio || 1,
-        2
-      );
+      Math.min(window.devicePixelRatio || 1, 2);
 
-
-    const displayWidth =
-      Math.floor(
+    const displayWidth = Math.floor(
         this.canvas.clientWidth
         *
         pixelRatio
       );
-
 
     const displayHeight =
       Math.floor(
@@ -3758,7 +1091,6 @@ export class DungeonRenderer {
         *
         pixelRatio
       );
-
 
     if (
       this.canvas.width
