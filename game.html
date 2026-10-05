@@ -130,6 +130,48 @@
   </div>
 </main>
 
+<!-- Game Navigation -->
+<button
+  id="menu-button"
+  type="button"
+  aria-label="Open navigation menu">
+  ☰
+</button>
+
+<div id="game-menu">
+
+  <nav id="game-menu-content">
+
+    <a href="./index.html">
+      home
+    </a>
+
+    <a href="./game.html">
+      restart
+    </a>
+
+    <a href="https://netcoreub.threadless.com">
+      store
+    </a>
+
+    <a href="https://youtu.be/5s_GHRQ5pkQ">
+      film
+    </a>
+
+    <a href="https://distrokid.com/hyperfollow/iamloveseat/tunnel-run-original-short-film-soundtrack">
+      music
+    </a>
+
+    <button
+      id="menu-resume"
+      type="button">
+      resume
+    </button>
+
+  </nav>
+
+</div>
+
 <div id="death-overlay">
 
   <div id="death-content">
@@ -155,7 +197,50 @@
     </div>
 
     <div id="win-subtitle">
-      You Escaped Tunnel Run
+      Deliveries Successful
+    </div>
+
+    <div id="final-time">
+      Time: --:--.--
+    </div>
+
+    <div
+      id="high-score-entry"
+      class="hidden">
+
+      <div id="high-score-message">
+        New High Score!
+      </div>
+
+      <div id="initials-entry">
+
+        <input
+          id="player-initials"
+          type="text"
+          maxlength="3"
+          autocomplete="off"
+          aria-label="Enter your initials">
+
+        <button
+          id="submit-score"
+          type="button">
+          Enter
+        </button>
+
+      </div>
+
+    </div>
+
+    <div
+      id="leaderboard-display"
+      class="hidden">
+
+      <div id="leaderboard-title">
+        High Scores
+      </div>
+
+      <ol id="leaderboard-list"></ol>
+
     </div>
 
     <button id="win-play-again-button">

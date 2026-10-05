@@ -11,6 +11,11 @@ export class DungeonRenderer {
     this.exitAnimationLastTime = 0;
     this.exitAnimationSpeed = 400;
 
+    this.posterTextures = {}
+
+    this.graffitiTextures = {};
+    this.graffitiPlacements = [];
+
     // =========================================================
     // WEBGL CONTEXT
     // =========================================================
@@ -49,7 +54,14 @@ export class DungeonRenderer {
       POSTER_4: "assets/images/posters/poster4.png",
       POSTER_5: "assets/images/posters/poster5.png",
       POSTER_6: "assets/images/posters/poster6.png",
-      POSTER_7: "assets/images/posters/poster7.png"
+      POSTER_7: "assets/images/posters/poster7.png",
+
+      GRAFFITI_1: "assets/images/graffiti/graffiti1.png",
+      GRAFFITI_2: "assets/images/graffiti/graffiti2.png",
+      GRAFFITI_3: "assets/images/graffiti/graffiti3.png",
+      GRAFFITI_4: "assets/images/graffiti/graffiti4.png",
+      GRAFFITI_5: "assets/images/graffiti/graffiti5.png",
+      GRAFFITI_6: "assets/images/graffiti/graffiti6.png"
     };
 
 
@@ -157,6 +169,9 @@ export class DungeonRenderer {
     this.createBuffers();
 
     this.buildDungeonGeometry();
+
+    this.generateGraffiti();
+
 
     this.loadTextures();
   }
@@ -1272,19 +1287,19 @@ export class DungeonRenderer {
       this.loadTexture(
         this.texturePaths.flower,
         false
-      )
+      );
 
     this.greenPotionTexture =
       this.loadTexture(
         this.texturePaths.green_potion,
         false
-      )
+      );
 
     this.cookiesTexture =
       this.loadTexture(
         this.texturePaths.cookies,
         false
-      )
+      );
 
     this.potionTexture =
       this.loadTexture(
@@ -1310,36 +1325,58 @@ export class DungeonRenderer {
         this.texturePaths.POSTER_1,
         false
       ),
-
       POSTER_2: this.loadTexture(
         this.texturePaths.POSTER_2,
         false
       ),
-
       POSTER_3: this.loadTexture(
         this.texturePaths.POSTER_3,
         false
       ),
-
       POSTER_4: this.loadTexture(
         this.texturePaths.POSTER_4,
         false
       ),
-
       POSTER_5: this.loadTexture(
         this.texturePaths.POSTER_5,
         false
       ),
-
       POSTER_6: this.loadTexture(
         this.texturePaths.POSTER_6,
         false
       ),
-
       POSTER_7: this.loadTexture(
         this.texturePaths.POSTER_7,
         false
+      ),
+    };
+
+    this.graffitiTextures = {
+      GRAFFITI_1: this.loadTexture(
+        this.texturePaths.GRAFFITI_1,
+        false
+      ),
+      GRAFFITI_2: this.loadTexture(
+        this.texturePaths.GRAFFITI_2,
+        false
+      ),
+      GRAFFITI_3: this.loadTexture(
+        this.texturePaths.GRAFFITI_3,
+        false
+      ),
+      GRAFFITI_4: this.loadTexture(
+        this.texturePaths.GRAFFITI_4,
+        false
+      ),
+      GRAFFITI_5: this.loadTexture(
+        this.texturePaths.GRAFFITI_5,
+        false
+      ),
+      GRAFFITI_6: this.loadTexture(
+        this.texturePaths.GRAFFITI_6,
+        false
       )
+
     };
   }
 
@@ -1457,9 +1494,6 @@ export class DungeonRenderer {
         gl.TEXTURE_WRAP_T,
         gl.CLAMP_TO_EDGE
       );
-
-
-      this.render();
     };
 
 
@@ -1593,6 +1627,31 @@ export class DungeonRenderer {
       this.wallTexture
     );
 
+    // ---------------------------------------------------------
+// GRAFFITI
+// ---------------------------------------------------------
+
+    for (
+      const graffiti
+      of this.graffitiPlacements
+      ) {
+
+      const texture =
+        this.graffitiTextures[
+          graffiti.texture
+          ];
+
+
+      if (texture) {
+        this.drawWallGraffiti(
+          graffiti.row,
+          graffiti.col,
+          graffiti.wall,
+          graffiti.length,
+          texture
+        );
+      }
+    }
 
     // ---------------------------------------------------------
     // ROOM OBJECTS
@@ -1922,6 +1981,703 @@ export class DungeonRenderer {
     );
   }
 
+  // =========================================================
+  // WALL GRAFFITI
+  // =========================================================
+
+  findHorizontalGraffitiCandidates(
+    length,
+    occupiedWalls,
+    candidates
+  ) {
+
+    for (
+      let wallRow = 0;
+      wallRow <= this.dungeon.rows;
+      wallRow++
+    ) {
+
+      for (
+        let startCol = 0;
+        startCol <=
+        this.dungeon.cols - length;
+        startCol++
+      ) {
+
+        /*
+         * A horizontal physical wall at wallRow
+         * separates:
+         *
+         * row wallRow - 1  [SOUTH face]
+         * -----------------------------
+         * row wallRow      [NORTH face]
+         */
+
+
+        const wallKeys = [];
+
+        let physicalWallExists =
+          true;
+
+
+        for (
+          let i = 0;
+          i < length;
+          i++
+        ) {
+
+          const col =
+            startCol + i;
+
+
+          const key =
+            "H:"
+            + wallRow
+            + ":"
+            + col;
+
+
+          if (
+            occupiedWalls.has(key)
+          ) {
+
+            physicalWallExists = false;
+            break;
+          }
+
+
+          wallKeys.push(key);
+
+
+          /*
+           * Determine whether this physical
+           * horizontal wall actually exists.
+           */
+
+          if (
+            wallRow <
+            this.dungeon.rows
+          ) {
+
+            const roomBelow =
+              this.dungeon.getRoom(
+                wallRow,
+                col
+              );
+
+
+            if (roomBelow.northDoor) {
+
+              physicalWallExists = false;
+              break;
+            }
+          }
+
+          else {
+
+            /*
+             * Bottom dungeon boundary.
+             */
+            const roomAbove =
+              this.dungeon.getRoom(
+                wallRow - 1,
+                col
+              );
+
+
+            if (roomAbove.southDoor) {
+
+              physicalWallExists = false;
+              break;
+            }
+          }
+        }
+
+
+        if (!physicalWallExists) {
+          continue;
+        }
+
+
+        // -----------------------------------------
+        // NORTH FACE
+        // -----------------------------------------
+
+        if (
+          wallRow <
+          this.dungeon.rows
+          &&
+          this.isHorizontalFaceClear(
+            wallRow,
+            startCol,
+            length
+          )
+        ) {
+
+          candidates.push({
+            row: wallRow,
+            col: startCol,
+            wall: "NORTH",
+            length: length,
+            wallKeys: wallKeys
+          });
+        }
+
+
+        // -----------------------------------------
+        // SOUTH FACE
+        // -----------------------------------------
+
+        if (
+          wallRow > 0
+          &&
+          this.isHorizontalFaceClear(
+            wallRow - 1,
+            startCol,
+            length
+          )
+        ) {
+
+          candidates.push({
+            row: wallRow - 1,
+            col: startCol,
+            wall: "SOUTH",
+            length: length,
+            wallKeys: wallKeys
+          });
+        }
+      }
+    }
+  }
+
+
+  findVerticalGraffitiCandidates(
+    length,
+    occupiedWalls,
+    candidates
+  ) {
+
+    for (
+      let wallCol = 0;
+      wallCol <= this.dungeon.cols;
+      wallCol++
+    ) {
+
+      for (
+        let startRow = 0;
+        startRow <=
+        this.dungeon.rows - length;
+        startRow++
+      ) {
+
+        /*
+         * A vertical physical wall at wallCol
+         * separates:
+         *
+         * WEST-facing room | EAST-facing room
+         */
+
+
+        const wallKeys = [];
+
+        let physicalWallExists =
+          true;
+
+
+        for (
+          let i = 0;
+          i < length;
+          i++
+        ) {
+
+          const row =
+            startRow + i;
+
+
+          const key =
+            "V:"
+            + row
+            + ":"
+            + wallCol;
+
+
+          if (
+            occupiedWalls.has(key)
+          ) {
+
+            physicalWallExists = false;
+            break;
+          }
+
+
+          wallKeys.push(key);
+
+
+          if (
+            wallCol <
+            this.dungeon.cols
+          ) {
+
+            const roomRight =
+              this.dungeon.getRoom(
+                row,
+                wallCol
+              );
+
+
+            if (roomRight.westDoor) {
+
+              physicalWallExists = false;
+              break;
+            }
+          }
+
+          else {
+
+            /*
+             * Right dungeon boundary.
+             */
+            const roomLeft =
+              this.dungeon.getRoom(
+                row,
+                wallCol - 1
+              );
+
+
+            if (roomLeft.eastDoor) {
+
+              physicalWallExists = false;
+              break;
+            }
+          }
+        }
+
+
+        if (!physicalWallExists) {
+          continue;
+        }
+
+
+        // -----------------------------------------
+        // WEST FACE
+        // -----------------------------------------
+
+        if (
+          wallCol <
+          this.dungeon.cols
+          &&
+          this.isVerticalFaceClear(
+            startRow,
+            wallCol,
+            length
+          )
+        ) {
+
+          candidates.push({
+            row: startRow,
+            col: wallCol,
+            wall: "WEST",
+            length: length,
+            wallKeys: wallKeys
+          });
+        }
+
+
+        // -----------------------------------------
+        // EAST FACE
+        // -----------------------------------------
+
+        if (
+          wallCol > 0
+          &&
+          this.isVerticalFaceClear(
+            startRow,
+            wallCol - 1,
+            length
+          )
+        ) {
+
+          candidates.push({
+            row: startRow,
+            col: wallCol - 1,
+            wall: "EAST",
+            length: length,
+            wallKeys: wallKeys
+          });
+        }
+      }
+    }
+  }
+
+  isHorizontalFaceClear(
+    row,
+    startCol,
+    length
+  ) {
+
+    for (
+      let i = 0;
+      i < length - 1;
+      i++
+    ) {
+
+      const room =
+        this.dungeon.getRoom(
+          row,
+          startCol + i
+        );
+
+
+      /*
+       * A wall between these rooms would
+       * physically slice through the mural.
+       */
+      if (!room.eastDoor) {
+        return false;
+      }
+    }
+
+
+    return true;
+  }
+
+
+  isVerticalFaceClear(
+    startRow,
+    col,
+    length
+  ) {
+
+    for (
+      let i = 0;
+      i < length - 1;
+      i++
+    ) {
+
+      const room =
+        this.dungeon.getRoom(
+          startRow + i,
+          col
+        );
+
+
+      if (!room.southDoor) {
+        return false;
+      }
+    }
+
+
+    return true;
+  }
+
+  // =========================================================
+  // GRAFFITI PLACEMENT
+  // =========================================================
+
+  generateGraffiti() {
+
+    this.graffitiPlacements = [];
+
+
+    const graffitiTypes = [
+      "GRAFFITI_1",
+      "GRAFFITI_2",
+      "GRAFFITI_3",
+      "GRAFFITI_4",
+      "GRAFFITI_5",
+      "GRAFFITI_6"
+    ];
+
+
+    /*
+     * Track physical wall segments already occupied
+     * by another mural.
+     */
+    const occupiedWalls =
+      new Set();
+
+
+    for (
+      const texture
+      of graffitiTypes
+      ) {
+
+      /*
+       * Prefer a 3-wall mural.
+       * If none remain, try 2 walls.
+       */
+      let candidates =
+        this.findGraffitiCandidates(
+          3,
+          occupiedWalls
+        );
+
+
+      if (candidates.length === 0) {
+
+        candidates =
+          this.findGraffitiCandidates(
+            2,
+            occupiedWalls
+          );
+      }
+
+
+      if (candidates.length === 0) {
+
+        console.warn(
+          "No valid location for",
+          texture
+        );
+
+        continue;
+      }
+
+
+      const candidate =
+        candidates[
+          Math.floor(
+            Math.random()
+            * candidates.length
+          )
+          ];
+
+
+      this.graffitiPlacements.push({
+        row: candidate.row,
+        col: candidate.col,
+        wall: candidate.wall,
+        length: candidate.length,
+        texture: texture
+      });
+
+
+      /*
+       * Reserve every physical wall segment
+       * occupied by this mural.
+       */
+      for (
+        const key
+        of candidate.wallKeys
+        ) {
+
+        occupiedWalls.add(key);
+      }
+    }
+
+  }
+
+
+  findGraffitiCandidates(
+    length,
+    occupiedWalls
+  ) {
+
+    const candidates = [];
+
+
+    this.findHorizontalGraffitiCandidates(
+      length,
+      occupiedWalls,
+      candidates
+    );
+
+
+    this.findVerticalGraffitiCandidates(
+      length,
+      occupiedWalls,
+      candidates
+    );
+
+
+    return candidates;
+  }
+
+  drawWallGraffiti(
+    row,
+    col,
+    wall,
+    length,
+    texture
+  ) {
+
+    if (!texture) {
+      return;
+    }
+
+
+    const vertices = [];
+
+    const bottom = 0.08;
+    const top = 0.92;
+
+    // Behind posters, but in front of wall.
+    const offset = 0.003;
+
+
+    for (
+      let segment = 0;
+      segment < length;
+      segment++
+    ) {
+
+      const uMin =
+        segment / length;
+
+      const uMax =
+        (segment + 1) / length;
+
+
+      switch (wall) {
+
+        // -----------------------------------------
+        // NORTH
+        // -----------------------------------------
+
+        case "NORTH": {
+
+          const segmentCol =
+            col + segment;
+
+          const x1 =
+            segmentCol;
+
+          const x2 =
+            segmentCol + 1;
+
+          const z =
+            row + offset;
+
+
+          this.addQuadWithUV(
+            vertices,
+
+            [x1, bottom, z],
+            [x2, bottom, z],
+            [x2, top, z],
+            [x1, top, z],
+
+            uMin,
+            uMax
+          );
+
+          break;
+        }
+
+
+        // -----------------------------------------
+        // SOUTH
+        // -----------------------------------------
+
+        case "SOUTH": {
+
+          const segmentCol =
+            col + segment;
+
+          const x1 =
+            segmentCol;
+
+          const x2 =
+            segmentCol + 1;
+
+          const z =
+            row + 1 - offset;
+
+
+          this.addQuadWithUV(
+            vertices,
+
+            [x2, bottom, z],
+            [x1, bottom, z],
+            [x1, top, z],
+            [x2, top, z],
+
+            1 - uMax,
+            1 - uMin
+          );
+
+          break;
+        }
+
+
+        // -----------------------------------------
+        // WEST
+        // -----------------------------------------
+
+        case "WEST": {
+
+          const segmentRow =
+            row + segment;
+
+          const z1 =
+            segmentRow;
+
+          const z2 =
+            segmentRow + 1;
+
+          const x =
+            col + offset;
+
+
+          this.addQuadWithUV(
+            vertices,
+
+            [x, bottom, z2],
+            [x, bottom, z1],
+            [x, top, z1],
+            [x, top, z2],
+
+            1 - uMax,
+            1 - uMin
+          );
+
+          break;
+        }
+
+
+        // -----------------------------------------
+        // EAST
+        // -----------------------------------------
+
+        case "EAST": {
+
+          const segmentRow =
+            row + segment;
+
+          const z1 =
+            segmentRow;
+
+          const z2 =
+            segmentRow + 1;
+
+          const x =
+            col + 1 - offset;
+
+
+          this.addQuadWithUV(
+            vertices,
+
+            [x, bottom, z1],
+            [x, bottom, z2],
+            [x, top, z2],
+            [x, top, z1],
+
+            uMin,
+            uMax
+          );
+
+          break;
+        }
+      }
+    }
+
+
+    this.uploadDynamicSprite(
+      vertices,
+      texture
+    );
+  }
+
 
   // =========================================================
   // GENERIC BILLBOARD SPRITE
@@ -1938,10 +2694,6 @@ export class DungeonRenderer {
     if (!texture) {
       return;
     }
-
-
-    const gl = this.gl;
-
 
     const centerX =
       col + 0.5;
@@ -2394,9 +3146,12 @@ export class DungeonRenderer {
     );
 
 
+    const vertexCount =
+      vertices.length / 5;
+
     this.drawBuffer(
       this.spriteBuffer,
-      6,
+      vertexCount,
       texture
     );
 
