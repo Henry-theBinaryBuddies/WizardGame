@@ -16,7 +16,6 @@ export class GameController {
     if (this.player.hp <= 0) {
       this.gameOver = true;
       AudioManager.play("wizard2");
-      console.log("LOSS TRIGGERED");
       return true;
     }
 
@@ -29,12 +28,6 @@ export class GameController {
         this.player.row,
         this.player.col
       );
-
-    console.log(
-      "Checking win:",
-      "Exit =", room.isExit,
-      "Artifacts =", this.player.artifacts
-    );
 
     if (
       room.isExit
@@ -199,8 +192,6 @@ export class GameController {
         this.player.getPosition()
       );
 
-    console.log("Wizard path:", path);
-
     if (!path || path.length <= 1) {
       return;
     }
@@ -212,11 +203,6 @@ export class GameController {
       nextStep.col
     );
 
-    console.log(
-      "Wizard moved to:",
-      this.wizard.row,
-      this.wizard.col
-    );
   }
 
   checkForWizardCollision() {

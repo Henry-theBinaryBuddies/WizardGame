@@ -170,6 +170,7 @@ export class DungeonPopulator {
   isAvailable(room, row, col) {
     return !room.isExit
       && !room.hasTrap
+      && !room.hasPotion
       && !room.hasArtifact()
       && !this.isPlayerStart(row, col);
   }

@@ -1,10 +1,12 @@
 Credits & Attribution:
 Website and game developed by:
 Henry Lee Rudolph Jr. of theBinaryBuddies LLC
+https://www.thebinarybuddies.com
 
 Film:
 "Tunnel Run" by London Homer-Wambeam
 Hadron Industries Entertainment, LLC
+https://www.youtube.com/@HadronEntertainment
 
 Starring:
 Henry Lee Rudolph Jr.
@@ -58,8 +60,4 @@ original by wulax, edited for v3 base by bluecarrot16, Jump/Sit/Emote/Run/Revise
 Licenses: OGA-BY 3.0, CC-BY-SA 3.0, GPL 3.0
 
 Authors: JaidynReiman, bluecarrot16, Johannes Sjölund (wulax)
-
-TODO:
-Optimize assets for smaller file size to reduce download time.
---SPECIFICALLY TEST ON iPHONE, ANDROID AND DESKTOP SEEM FINE--
 

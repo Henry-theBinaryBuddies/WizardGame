@@ -7,14 +7,6 @@ import {
 } from "./generation/DungeonPopulator.js";
 
 import {
-  DungeonRenderer
-} from "./view/DungeonRenderer.js";
-
-import {
-  DungeonDebugRenderer
-} from "./view/DungeonDebugRenderer.js";
-
-import {
   Player
 } from "./model/Player.js";
 
@@ -147,24 +139,6 @@ const canvas =
     "dungeon-view"
   );
 
-
-const dungeonRenderer =
-  new DungeonRenderer(
-    canvas,
-    dungeon,
-    player,
-    wizard
-  );
-
-
-const debugRenderer =
-  new DungeonDebugRenderer(
-    dungeon,
-    player,
-    wizard
-  );
-
-
 // =========================================================
 // DOM REFERENCES
 // =========================================================
@@ -195,12 +169,6 @@ const cookiesArtifact =
   document.getElementById(
     "hud-artifact-cookies"
   );
-
-const debugView =
-  document.getElementById(
-    "debug-view"
-  );
-
 
 const deathOverlay =
   document.getElementById(
@@ -510,12 +478,6 @@ function updateGameUI() {
   updateHealthHUD();
 
   updateInventoryHUD();
-
-
-  // Temporary debug map
-  debugView.textContent =
-    debugRenderer.render();
-
 
   if (controller.gameWon) {
 
