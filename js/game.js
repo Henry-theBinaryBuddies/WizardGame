@@ -80,7 +80,7 @@ populator.populate();
 
 const backgroundMusic = document.getElementById("background-music");
 
-backgroundMusic.volume = 0.3;
+backgroundMusic.volume = 0.2;
 
 function startBackgroundMusic() {
   backgroundMusic.play()
@@ -618,6 +618,99 @@ document
       updateGameUI();
     }
   );
+
+// =========================================================
+// MOBILE LONG-PRESS PROTECTION
+// =========================================================
+
+document.addEventListener(
+  "contextmenu",
+  event => {
+
+    if (
+      event.target.closest(
+        "#game, #menu-button, #game-menu"
+      )
+    ) {
+      event.preventDefault();
+    }
+  }
+);
+
+// =========================================================
+// KEYBOARD CONTROLS
+// =========================================================
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    if (
+      introActive
+      ||
+      menuActive
+      ||
+      controller.gameWon
+      ||
+      controller.gameOver
+    ) {
+      return;
+    }
+
+
+    switch (event.key.toLowerCase()) {
+
+      case "arrowleft":
+      case "a":
+
+        event.preventDefault();
+
+        controller.turnLeft();
+
+        updateGameUI();
+
+        break;
+
+
+      case "arrowup":
+      case "w":
+
+        event.preventDefault();
+
+        handlePlayerAction(
+          () => {
+            controller.moveForward();
+          }
+        );
+
+        break;
+
+
+      case "arrowright":
+      case "d":
+
+        event.preventDefault();
+
+        controller.turnRight();
+
+        updateGameUI();
+
+        break;
+
+
+      case "arrowdown":
+      case "s":
+
+        event.preventDefault();
+
+        controller.usePotion();
+
+        updateGameUI();
+
+        break;
+    }
+  }
+);
 
 // =========================================================
 // MOBILE SWIPE CONTROLS

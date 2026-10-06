@@ -1094,6 +1094,22 @@ body {
   padding: 3px 0;
 }
 
+/* =========================================================
+   MOBILE PRESS / SELECTION PROTECTION
+   ========================================================= */
+
+#game,
+#game button,
+#menu-button,
+#game-menu {
+  -webkit-user-select: none;
+  user-select: none;
+
+  -webkit-touch-callout: none;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
 @media (orientation: portrait) and (pointer: coarse) {
 
   .turn-control {
