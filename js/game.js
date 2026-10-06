@@ -7,6 +7,10 @@ import {
 } from "./generation/DungeonPopulator.js";
 
 import {
+  DungeonRenderer
+} from "./view/DungeonRenderer.js";
+
+import {
   Player
 } from "./model/Player.js";
 
@@ -137,6 +141,15 @@ const controller =
 const canvas =
   document.getElementById(
     "dungeon-view"
+  );
+
+
+const dungeonRenderer =
+  new DungeonRenderer(
+    canvas,
+    dungeon,
+    player,
+    wizard
   );
 
 // =========================================================
