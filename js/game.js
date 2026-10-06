@@ -80,7 +80,7 @@ populator.populate();
 
 const backgroundMusic = document.getElementById("background-music");
 
-backgroundMusic.volume = 0.2;
+backgroundMusic.volume = 0.1;
 
 function startBackgroundMusic() {
   backgroundMusic.play()
