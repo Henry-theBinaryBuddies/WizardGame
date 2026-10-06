@@ -1,13 +1,13 @@
 class AudioManager {
   static sounds = {
-      artifact: new Audio("./assets/sfx/artifact.wav"),
-      potionPickup: new Audio("./assets/sfx/treasure.wav"),
-      heal: new Audio("./assets/sfx/heal.wav"),
-      trap: new Audio("./assets/sfx/pit.wav"),
-      wizard: new Audio("./assets/sfx/evil laugh.wav"),
-      wizard2: new Audio("./assets/sfx/laugh 3.wav"),
-      step: new Audio("./assets/sfx/step.wav"),
-      victory: new Audio("./assets/sfx/great job.wav")
+      artifact: new Audio("./assets/sfx/artifact.mp3"),
+      potionPickup: new Audio("./assets/sfx/treasure.mp3"),
+      heal: new Audio("./assets/sfx/heal.mp3"),
+      trap: new Audio("./assets/sfx/pit.mp3"),
+      wizard: new Audio("./assets/sfx/evil laugh.mp3"),
+      wizard2: new Audio("./assets/sfx/laugh 3.mp3"),
+      step: new Audio("./assets/sfx/step.mp3"),
+      victory: new Audio("./assets/sfx/great job.mp3")
     };
 
   static volume = 0.7;
