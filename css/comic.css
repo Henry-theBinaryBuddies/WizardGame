@@ -1,0 +1,316 @@
+
+@font-face {
+  font-family: "Red Alert";
+  src: url("../assets/fonts/red-alert.ttf")
+  format("truetype");
+  font-display: swap;
+}
+
+:root {
+  --background: #090909;
+  --panel: #181818;
+  --border: #777;
+  --text: #eee;
+  --muted: #aaa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  height: 100dvh;
+  background: var(--background);
+  color: var(--text);
+  font-family: "Red Alert", monospace;
+
+  display: flex;
+  flex-direction: column;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.comic-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 20px;
+
+  padding: 8px 16px;
+
+  border-bottom: 2px solid var(--border);
+  background: #111;
+}
+
+.comic-header h1 {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: 3px;
+}
+
+.back-link {
+  font-size: 14px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.comic-main {
+  flex: 1;
+  min-height: 0;
+
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+  padding: 8px 12px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+
+  overflow: hidden;
+}
+
+#loading-message {
+  margin: 25px;
+  color: var(--muted);
+  letter-spacing: 2px;
+}
+
+#reader-stage {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  padding: 6px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  overflow: hidden;
+
+  background: var(--panel);
+  border: 2px solid var(--border);
+
+  box-shadow:
+    0 0 0 5px #050505,
+    0 0 30px rgba(255, 255, 255, 0.08);
+}
+
+.comic-page {
+  background: white;
+  overflow: hidden;
+}
+
+.comic-page img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.reader-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  gap: 16px;
+  margin: 0;
+  width: 100%;
+}
+
+.reader-controls button {
+  padding: 8px 14px;
+}
+
+.reader-controls button,
+.reader-actions button,
+.reader-actions a {
+  background: #151515;
+  color: white;
+  border: 2px solid #aaa;
+
+  padding: 12px 18px;
+
+  text-decoration: none;
+  letter-spacing: 1px;
+
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.reader-controls button:hover:not(:disabled),
+.reader-actions button:hover,
+.reader-actions a:hover {
+  background: white;
+  color: black;
+}
+
+.reader-controls button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+#page-counter {
+  min-width: 135px;
+  text-align: center;
+  font-size: 16px;
+}
+
+.reader-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+
+  gap: 8px;
+  margin: 0;
+}
+
+.reader-actions button,
+.reader-actions a {
+  padding: 8px 12px;
+}
+
+.reader-hint {
+  flex-shrink: 0;
+  margin: 0;
+
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+.comic-footer {
+  flex-shrink: 0;
+  padding: 5px;
+
+  text-align: center;
+  border-top: 1px solid #444;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ZOOM OVERLAY */
+
+.hidden {
+  display: none !important;
+}
+
+.zoom-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+
+  background: rgba(0, 0, 0, 0.96);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#close-zoom {
+  position: absolute;
+  top: 12px;
+  right: 20px;
+  z-index: 2;
+
+  border: none;
+  background: transparent;
+  color: white;
+
+  font-size: 44px;
+}
+
+.zoom-content {
+  width: 100%;
+  height: 100%;
+
+  overflow: auto;
+  padding: 60px 20px 30px;
+
+  text-align: center;
+}
+
+#zoom-canvas {
+  display: inline-block;
+  max-width: none;
+  height: auto;
+  background: white;
+}
+
+@media (orientation: portrait) {
+
+  .comic-header {
+    padding: 6px 12px;
+    gap: 10px;
+  }
+
+  .comic-header h1 {
+    font-size: 19px;
+  }
+
+  .comic-main {
+    padding: 6px;
+    gap: 6px;
+  }
+
+  #reader-stage {
+    padding: 3px;
+  }
+
+  .reader-controls {
+    gap: 8px;
+  }
+
+  .reader-controls button {
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  #page-counter {
+    min-width: 85px;
+    font-size: 12px;
+  }
+
+  .reader-actions {
+    gap: 6px;
+  }
+
+  .reader-actions button,
+  .reader-actions a {
+    padding: 7px;
+    font-size: 12px;
+  }
+
+  .reader-hint,
+  .comic-footer {
+    display: none;
+  }
+}
+

@@ -212,6 +212,19 @@ body {
    DEATH SCREEN
    ========================================================= */
 
+#death-overlay #leaderboard-display {
+  opacity: 0;
+}
+
+#death-overlay.active #leaderboard-display {
+  animation:
+    death-button-fade
+    1s
+    ease-out
+    3.5s
+    forwards;
+}
+
 #death-overlay {
   position: fixed;
   inset: 0;

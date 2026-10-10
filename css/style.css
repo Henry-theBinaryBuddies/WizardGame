@@ -664,15 +664,13 @@ to {
 }
 }
 
-@media (max-width: 600px) {
+@media (orientation: portrait) {
 
   .buttons {
-    gap: 2%;
-    padding: 2%;
+    gap: .5%;
+    padding: 20px;
+    margin-bottom: 10%;
   }
 
-  .buttons button {
-    font-size: clamp(20px, 7vw, 36px);
-  }
 }
 

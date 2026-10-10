@@ -76,7 +76,7 @@ populator.populate();
 
 const backgroundMusic = document.getElementById("background-music");
 
-backgroundMusic.volume = 0.1;
+backgroundMusic.volume = 0.2;
 
 function startBackgroundMusic() {
   backgroundMusic.play()
@@ -422,9 +422,13 @@ function showDeathScreen() {
   deathScreenShown = true;
 
 
+  playAgainButton.before(leaderboardDisplay);
+
   deathOverlay.classList.add(
     "active"
   );
+
+  renderLeaderboard();
 }
 
 

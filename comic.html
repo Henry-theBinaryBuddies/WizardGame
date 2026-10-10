@@ -1,0 +1,104 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <title>Tunnel Run | The Comic</title>
+
+  <link rel="stylesheet" href="./css/comic.css">
+</head>
+
+<body>
+
+<header class="comic-header">
+  <a href="./index.html" class="back-link">
+    ← RETURN
+  </a>
+
+  <h1>TUNNEL RUN</h1>
+</header>
+
+<main class="comic-main">
+
+  <div id="loading-message" role="status">
+    INITIALIZING COMIC READER...
+  </div>
+
+  <div id="reader-stage">
+    <div id="comic-book"></div>
+  </div>
+
+  <nav class="reader-controls"
+       aria-label="Comic navigation">
+
+    <button id="previous-page" type="button">
+      ◀ PREVIOUS
+    </button>
+
+    <span id="page-counter">
+            LOADING...
+        </span>
+
+    <button id="next-page" type="button">
+      NEXT ▶
+    </button>
+
+  </nav>
+
+  <div class="reader-actions">
+    <button id="zoom-page" type="button">
+      ENLARGE PAGE
+    </button>
+
+    <button id="zoom-right-page"
+            class="hidden"
+            type="button">
+      ENLARGE RIGHT
+    </button>
+
+    <a href="./assets/TUNNEL%20RUN_WebComic.pdf"
+       target="_blank"
+       rel="noopener noreferrer">
+      OPEN ORIGINAL PDF
+    </a>
+  </div>
+
+  <p class="reader-hint">
+    CLICK PAGE EDGES OR USE ARROW KEYS TO TURN PAGES
+  </p>
+
+</main>
+
+<div id="zoom-overlay"
+     class="zoom-overlay hidden"
+     role="dialog"
+     aria-modal="true"
+     aria-label="Enlarged comic page">
+
+  <button id="close-zoom"
+          type="button"
+          aria-label="Close enlarged page">
+    ×
+  </button>
+
+  <div class="zoom-content">
+    <canvas id="zoom-canvas"></canvas>
+  </div>
+
+</div>
+
+<footer class="comic-footer">
+  © HADRON INDUSTRIES
+</footer>
+
+<script
+  src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js">
+</script>
+
+<script type="module" src="./js/comic.js"></script>
+
+</body>
+</html>
